@@ -11,12 +11,16 @@ export function useEvents() {
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
+    const now = new Date().toISOString();
+    // Näytä tapahtumat jotka eivät ole päättyneet:
+    // - tulevat (starts_at >= now), TAI
+    // - parhaillaan käynnissä (ends_at >= now)
     const { data, error } = await supabase
       .from('events')
       .select(
         'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
       )
-      .gte('starts_at', new Date().toISOString())
+      .or(`starts_at.gte.${now},ends_at.gte.${now}`)
       .order('starts_at', { ascending: true });
 
     if (error) setError(error.message);

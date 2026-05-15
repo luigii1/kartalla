@@ -4,7 +4,9 @@ import { mapKeywordsToCategory } from './category-mapper';
 
 type SyncInsert = EventInsert & { raw_data: unknown };
 
-const fi = (obj: Record<string, string | undefined> | null | undefined): string | null =>
+type Translated = { fi?: string; en?: string; sv?: string };
+
+const fi = (obj: Translated | null | undefined): string | null =>
   obj?.fi ?? obj?.en ?? obj?.sv ?? null;
 
 export function transformLinkedEvent(event: LinkedEventsEvent): SyncInsert | null {
@@ -16,8 +18,8 @@ export function transformLinkedEvent(event: LinkedEventsEvent): SyncInsert | nul
   const [lng, lat] = coords;
 
   return {
-    title: fi(event.name ?? undefined) ?? 'Nimetön tapahtuma',
-    description: fi(event.description ?? undefined) ?? fi(event.short_description ?? undefined),
+    title: fi(event.name) ?? 'Nimetön tapahtuma',
+    description: fi(event.description) ?? fi(event.short_description),
     lat,
     lng,
     category: mapKeywordsToCategory(event.keywords ?? []),
@@ -27,7 +29,7 @@ export function transformLinkedEvent(event: LinkedEventsEvent): SyncInsert | nul
     ends_at: event.end_time ?? null,
     location_name: fi(event.location?.name) ?? null,
     image_url: event.images?.[0]?.url ?? null,
-    url: fi(event.info_url ?? undefined),
+    url: fi(event.info_url),
     last_synced_at: new Date().toISOString(),
     raw_data: event,
   };

@@ -15,7 +15,8 @@ function localDateTimeDefault() {
   const d = new Date();
   d.setMinutes(0, 0, 0);
   d.setHours(d.getHours() + 1);
-  return d.toISOString().slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModalProps) {

@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useState } from 'react';
 import Map from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
