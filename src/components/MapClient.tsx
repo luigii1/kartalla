@@ -15,11 +15,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+// Number.isFinite rejects null/undefined/NaN without coercion (unlike isNaN)
 function hasValidCoords(event: Event): boolean {
-  return (
-    event.lat != null && event.lng != null &&
-    !isNaN(event.lat) && !isNaN(event.lng)
-  );
+  return Number.isFinite(event.lat as number) && Number.isFinite(event.lng as number);
 }
 
 function createCategoryIcon(category: EventCategory) {
