@@ -30,7 +30,6 @@ export default function Home() {
   const { events, loading, fetchByBounds, addEvent, deleteEvent } = useEvents();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
   const [flyTarget, setFlyTarget] = useState<Event | null>(null);
-  const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filters, setFilters] = useState<Filters>(defaultFilters());
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -112,11 +111,9 @@ export default function Home() {
       <div className="absolute inset-0 z-0">
         <Map
           events={filteredEvents}
-          hoveredEvent={hoveredEvent}
           flyTarget={flyTarget}
           onSearchArea={handleSearchArea}
           onBoundsChange={handleBoundsChange}
-          onHoverEvent={setHoveredEvent}
           onMapClick={handleMapClick}
           addingMode={addingMode}
           loading={loading}
@@ -137,10 +134,8 @@ export default function Home() {
         <EventSidebar
           events={visibleEvents}
           selectedEvent={selectedEvent}
-          hoveredEvent={hoveredEvent}
           onSelectEvent={handleSelectFromList}
           onDeleteEvent={deleteEvent}
-          onHoverEvent={setHoveredEvent}
           canDelete={!!user}
           loading={loading}
         />
@@ -171,10 +166,8 @@ export default function Home() {
             <EventSidebar
               events={visibleEvents}
               selectedEvent={selectedEvent}
-              hoveredEvent={hoveredEvent}
               onSelectEvent={handleSelectFromList}
               onDeleteEvent={deleteEvent}
-              onHoverEvent={setHoveredEvent}
               canDelete={!!user}
               loading={loading}
             />

@@ -102,24 +102,17 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
 }
 
 const EventMarker = memo(function EventMarker({
-  event, isHovered, onHoverEvent,
+  event,
 }: {
   event: Event;
-  isHovered: boolean;
-  onHoverEvent: (event: Event | null) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   return (
     <Marker
       ref={markerRef}
       position={[event.lat, event.lng]}
-      icon={createCategoryIcon(event.category, isHovered ? 'hover' : 'normal')}
-      zIndexOffset={isHovered ? 1000 : 0}
-      eventHandlers={{
-        click: () => markerRef.current?.openPopup(),
-        mouseover: () => onHoverEvent(event),
-        mouseout: () => onHoverEvent(null),
-      }}
+      icon={createCategoryIcon(event.category, 'normal')}
+      eventHandlers={{ click: () => markerRef.current?.openPopup() }}
     >
       <Popup>
         <div className="min-w-[180px] max-w-[240px]">
@@ -146,19 +139,17 @@ const EventMarker = memo(function EventMarker({
 
 interface MapClientProps {
   events: Event[];
-  hoveredEvent: Event | null;
   flyTarget: Event | null;
   onSearchArea: (bounds: MapBounds) => void;
   onBoundsChange: (bounds: MapBounds) => void;
-  onHoverEvent: (event: Event | null) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
   loading: boolean;
 }
 
 export default function MapClient({
-  events, hoveredEvent, flyTarget,
-  onSearchArea, onBoundsChange, onHoverEvent, onMapClick, addingMode, loading,
+  events, flyTarget,
+  onSearchArea, onBoundsChange, onMapClick, addingMode, loading,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -207,12 +198,7 @@ export default function MapClient({
           spiderfyOnMaxZoom
         >
           {visibleEvents.map((event) => (
-            <EventMarker
-              key={event.id}
-              event={event}
-              isHovered={hoveredEvent?.id === event.id}
-              onHoverEvent={onHoverEvent}
-            />
+            <EventMarker key={event.id} event={event} />
           ))}
         </MarkerClusterGroup>
       </MapContainer>

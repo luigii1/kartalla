@@ -7,11 +7,9 @@ const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 
 interface MapProps {
   events: Event[];
-  hoveredEvent: Event | null;
   flyTarget: Event | null;
   onSearchArea: (bounds: MapBounds) => void;
   onBoundsChange: (bounds: MapBounds) => void;
-  onHoverEvent: (event: Event | null) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
   loading: boolean;
