@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomContr
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Event, EventCategory, MapBounds } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/types';
 
