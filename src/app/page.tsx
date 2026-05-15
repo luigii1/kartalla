@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Map from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
 import FilterBar, { defaultFilters, type Filters } from '@/components/FilterBar';
@@ -10,12 +10,11 @@ import AddEventModal from '@/components/AddEventModal';
 import AuthModal from '@/components/AuthModal';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
-import type { Event, EventInsert } from '@/lib/types';
+import type { Event, EventInsert, MapBounds } from '@/lib/types';
 
+// Date range is handled server-side; here we only filter by category and sort.
 function applyFilters(events: Event[], filters: Filters): Event[] {
   let result = events.filter((e) => filters.categories.has(e.category));
-  if (filters.dateFrom) result = result.filter((e) => e.starts_at >= filters.dateFrom);
-  if (filters.dateTo) result = result.filter((e) => e.starts_at <= filters.dateTo + 'T23:59:59');
   if (filters.sort === 'date_asc') result = [...result].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   else if (filters.sort === 'date_desc') result = [...result].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   else if (filters.sort === 'name_asc') result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'fi'));
@@ -34,6 +33,16 @@ export default function Home() {
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
 
+  // Remember the last searched bounds so date-range changes can re-fetch automatically.
+  const lastBoundsRef = useRef<MapBounds | null>(null);
+
+  // Re-fetch when date range changes, if a search has already been done.
+  useEffect(() => {
+    if (lastBoundsRef.current) {
+      fetchByBounds(lastBoundsRef.current, filters.dateFrom, filters.dateTo);
+    }
+  }, [filters.dateFrom, filters.dateTo, fetchByBounds]);
+
   const filteredEvents = useMemo(() => applyFilters(events, filters), [events, filters]);
 
   const handleSelectFromMap = useCallback((event: Event | null) => {
@@ -45,6 +54,11 @@ export default function Home() {
     setFlyTarget(event);
     setSheetOpen(false);
   }, []);
+
+  const handleSearchArea = useCallback((bounds: MapBounds) => {
+    lastBoundsRef.current = bounds;
+    fetchByBounds(bounds, filters.dateFrom, filters.dateTo);
+  }, [fetchByBounds, filters.dateFrom, filters.dateTo]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     if (addingMode) { setPendingCoords({ lat, lng }); setAddingMode(false); }
@@ -85,7 +99,6 @@ export default function Home() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      {/* Full-screen map */}
       <div className="absolute inset-0 z-0">
         <Map
           events={filteredEvents}
@@ -93,14 +106,14 @@ export default function Home() {
           hoveredEvent={hoveredEvent}
           flyTarget={flyTarget}
           onSelectEvent={handleSelectFromMap}
-          onSearchArea={fetchByBounds}
+          onSearchArea={handleSearchArea}
           onMapClick={handleMapClick}
           addingMode={addingMode}
           loading={loading}
         />
       </div>
 
-      {/* Desktop sidebar (md+) */}
+      {/* Desktop sidebar */}
       <div className="hidden md:flex flex-col absolute left-0 top-0 bottom-0 w-80 z-[400] bg-white border-r border-gray-200 shadow-xl">
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
