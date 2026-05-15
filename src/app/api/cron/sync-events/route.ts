@@ -19,21 +19,21 @@ export async function GET(request: NextRequest) {
     try {
       const raw = await fetchLinkedEvents(source);
 
-      // Debug: log first event to inspect structure
-      if (raw.length > 0) {
-        const first = raw[0];
-        console.log('[sync] first event id:', first.id);
-        console.log('[sync] first event start_time:', first.start_time);
-        console.log('[sync] first event location:', JSON.stringify(first.location));
-        const transformed = transformLinkedEvent(first);
-        console.log('[sync] first event transformed:', transformed ? 'OK' : 'NULL');
-      }
-
-      const events = raw
+      const transformed = raw
         .map(transformLinkedEvent)
         .filter((e): e is NonNullable<typeof e> => e !== null);
 
-      results.skipped += raw.length - events.length;
+      results.skipped += raw.length - transformed.length;
+
+      // Deduplicate by external_id — API sometimes returns duplicates
+      const seen = new Set<string>();
+      const events = transformed.filter((e) => {
+        if (seen.has(e.external_id!)) return false;
+        seen.add(e.external_id!);
+        return true;
+      });
+
+      results.skipped += transformed.length - events.length;
 
       for (let i = 0; i < events.length; i += 50) {
         const batch = events.slice(i, i + 50);
