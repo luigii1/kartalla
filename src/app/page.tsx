@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Map from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
 import AddEventModal from '@/components/AddEventModal';
 import AuthModal from '@/components/AuthModal';
+import FilterBar, { defaultFilters } from '@/components/FilterBar';
+import type { Filters } from '@/components/FilterBar';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import type { Event, EventInsert } from '@/lib/types';
@@ -16,6 +18,17 @@ export default function Home() {
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      if (!filters.categories.has(e.category)) return false;
+      const day = e.starts_at.slice(0, 10);
+      if (filters.dateFrom && day < filters.dateFrom) return false;
+      if (filters.dateTo && day > filters.dateTo) return false;
+      return true;
+    });
+  }, [events, filters]);
 
   const handleMapClick = (lat: number, lng: number) => {
     if (addingMode) { setPendingCoords({ lat, lng }); setAddingMode(false); }
@@ -54,6 +67,13 @@ export default function Home() {
         </div>
       </header>
 
+      <FilterBar
+        filters={filters}
+        onChange={setFilters}
+        total={events.length}
+        filtered={filteredEvents.length}
+      />
+
       {addingMode && (
         <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 text-center">
           Klikkaa karttaa lisätäksesi tapahtuman
@@ -62,11 +82,11 @@ export default function Home() {
 
       <div className="flex flex-1 overflow-hidden">
         <EventSidebar
-          events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent}
+          events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent}
           onDeleteEvent={deleteEvent} canDelete={!!user} loading={loading}
         />
         <div className="flex-1 relative">
-          <Map events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent}
+          <Map events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent}
             onMapClick={handleMapClick} addingMode={addingMode} />
         </div>
       </div>
