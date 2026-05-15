@@ -15,6 +15,13 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+function hasValidCoords(event: Event): boolean {
+  return (
+    event.lat != null && event.lng != null &&
+    !isNaN(event.lat) && !isNaN(event.lng)
+  );
+}
+
 function createCategoryIcon(category: EventCategory) {
   const color = CATEGORY_COLORS[category];
   return L.divIcon({
@@ -39,7 +46,7 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick: (lat: number,
 function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
   const map = useMap();
   useEffect(() => {
-    if (selectedEvent) {
+    if (selectedEvent && hasValidCoords(selectedEvent)) {
       map.flyTo([selectedEvent.lat, selectedEvent.lng], Math.max(map.getZoom(), 14), {
         animate: true,
         duration: 0.8,
@@ -101,6 +108,7 @@ interface MapClientProps {
 
 export default function MapClient({ events, selectedEvent, onSelectEvent, onMapClick, addingMode }: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
+  const validEvents = events.filter(hasValidCoords);
 
   return (
     <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%' }} className={addingMode ? 'cursor-crosshair' : ''}>
@@ -110,7 +118,7 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
       />
       <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
       <MapController selectedEvent={selectedEvent} />
-      {events.map((event) => (
+      {validEvents.map((event) => (
         <EventMarker
           key={event.id}
           event={event}
