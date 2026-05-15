@@ -102,10 +102,11 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
 }
 
 const EventMarker = memo(function EventMarker({
-  event, isHovered,
+  event, isHovered, onHoverEvent,
 }: {
   event: Event;
   isHovered: boolean;
+  onHoverEvent: (event: Event | null) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   return (
@@ -114,7 +115,11 @@ const EventMarker = memo(function EventMarker({
       position={[event.lat, event.lng]}
       icon={createCategoryIcon(event.category, isHovered ? 'hover' : 'normal')}
       zIndexOffset={isHovered ? 1000 : 0}
-      eventHandlers={{ click: () => markerRef.current?.openPopup() }}
+      eventHandlers={{
+        click: () => markerRef.current?.openPopup(),
+        mouseover: () => onHoverEvent(event),
+        mouseout: () => onHoverEvent(null),
+      }}
     >
       <Popup>
         <div className="min-w-[180px] max-w-[240px]">
@@ -145,6 +150,7 @@ interface MapClientProps {
   flyTarget: Event | null;
   onSearchArea: (bounds: MapBounds) => void;
   onBoundsChange: (bounds: MapBounds) => void;
+  onHoverEvent: (event: Event | null) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
   loading: boolean;
@@ -152,7 +158,7 @@ interface MapClientProps {
 
 export default function MapClient({
   events, hoveredEvent, flyTarget,
-  onSearchArea, onBoundsChange, onMapClick, addingMode, loading,
+  onSearchArea, onBoundsChange, onHoverEvent, onMapClick, addingMode, loading,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -205,6 +211,7 @@ export default function MapClient({
               key={event.id}
               event={event}
               isHovered={hoveredEvent?.id === event.id}
+              onHoverEvent={onHoverEvent}
             />
           ))}
         </MarkerClusterGroup>

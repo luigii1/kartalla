@@ -116,6 +116,7 @@ export default function Home() {
           flyTarget={flyTarget}
           onSearchArea={handleSearchArea}
           onBoundsChange={handleBoundsChange}
+          onHoverEvent={setHoveredEvent}
           onMapClick={handleMapClick}
           addingMode={addingMode}
           loading={loading}
@@ -136,6 +137,7 @@ export default function Home() {
         <EventSidebar
           events={visibleEvents}
           selectedEvent={selectedEvent}
+          hoveredEvent={hoveredEvent}
           onSelectEvent={handleSelectFromList}
           onDeleteEvent={deleteEvent}
           onHoverEvent={setHoveredEvent}

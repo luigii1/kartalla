@@ -6,6 +6,7 @@ import { CATEGORY_LABELS, CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/types';
 interface EventSidebarProps {
   events: Event[];
   selectedEvent: Event | null;
+  hoveredEvent: Event | null;
   onSelectEvent: (event: Event) => void;
   onDeleteEvent: (id: string) => void;
   onHoverEvent: (event: Event | null) => void;
@@ -21,7 +22,7 @@ function formatDate(iso: string) {
 }
 
 export default function EventSidebar({
-  events, selectedEvent, onSelectEvent, onDeleteEvent, onHoverEvent, canDelete, loading,
+  events, selectedEvent, hoveredEvent, onSelectEvent, onDeleteEvent, onHoverEvent, canDelete, loading,
 }: EventSidebarProps) {
   return (
     <div className="flex-1 overflow-y-auto">
@@ -38,8 +39,12 @@ export default function EventSidebar({
             onClick={() => onSelectEvent(event)}
             onMouseEnter={() => onHoverEvent(event)}
             onMouseLeave={() => onHoverEvent(null)}
-            className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-              selectedEvent?.id === event.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+            className={`p-3 border-b border-gray-100 cursor-pointer transition-colors ${
+              selectedEvent?.id === event.id
+                ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                : hoveredEvent?.id === event.id
+                  ? 'bg-gray-100'
+                  : 'hover:bg-gray-50'
             }`}
           >
             <div className="flex items-start justify-between gap-2">
