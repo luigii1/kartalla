@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -14,20 +14,26 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+// 12 possible icons (6 categories × 2 sizes) — cache to avoid recreating on every render
+const iconCache = new Map<string, L.DivIcon>();
 function createCategoryIcon(category: EventCategory, size: 'normal' | 'hover' = 'normal') {
+  const key = `${category}-${size}`;
+  if (iconCache.has(key)) return iconCache.get(key)!;
   const color = CATEGORY_COLORS[category];
   const icon = CATEGORY_ICONS[category];
   const px = size === 'hover' ? 32 : 24;
   const fontSize = size === 'hover' ? 13 : 10;
   const border = size === 'hover' ? 3 : 2;
   const shadow = size === 'hover' ? '0 3px 10px rgba(0,0,0,0.5)' : '0 2px 6px rgba(0,0,0,0.3)';
-  return L.divIcon({
+  const divIcon = L.divIcon({
     html: `<div style="background-color:${color};width:${px}px;height:${px}px;border-radius:50%;border:${border}px solid white;box-shadow:${shadow};display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;line-height:1;color:white;">${icon}</div>`,
     iconSize: [px, px],
     iconAnchor: [px / 2, px],
     popupAnchor: [0, -(px + 4)],
     className: '',
   });
+  iconCache.set(key, divIcon);
+  return divIcon;
 }
 
 function formatDateTime(iso: string) {
@@ -84,7 +90,9 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
   return null;
 }
 
-function EventMarker({
+// React.memo: only re-renders when this marker's own props change.
+// Prevents all markers re-rendering when e.g. hoveredEvent changes in parent.
+const EventMarker = memo(function EventMarker({
   event, isSelected, isHovered, onSelect,
 }: {
   event: Event;
@@ -120,7 +128,7 @@ function EventMarker({
       </Popup>
     </Marker>
   );
-}
+});
 
 interface MapClientProps {
   events: Event[];
@@ -153,7 +161,12 @@ export default function MapClient({
     }
   };
 
-  const visibleEvents = bounds ? events.filter((e) => inBounds(e, bounds)) : events;
+  // useMemo: recomputed only when events list or viewport bounds change,
+  // not when hoveredEvent / selectedEvent / loading change.
+  const visibleEvents = useMemo(
+    () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
+    [events, bounds]
+  );
 
   return (
     <div className="relative w-full h-full">

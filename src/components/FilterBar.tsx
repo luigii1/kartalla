@@ -13,10 +13,11 @@ export interface Filters {
 }
 
 export function defaultFilters(): Filters {
+  const today = new Date().toISOString().slice(0, 10);
   return {
     categories: new Set<EventCategory>(['music', 'sports', 'food', 'culture', 'family', 'other']),
-    dateFrom: new Date().toISOString().slice(0, 10),
-    dateTo: '',
+    dateFrom: today,
+    dateTo: today,
     sort: 'date_asc',
   };
 }
