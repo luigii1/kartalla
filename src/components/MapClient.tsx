@@ -1,6 +1,7 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Image from 'next/image';
@@ -35,6 +36,61 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick: (lat: number,
   return null;
 }
 
+function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (selectedEvent) {
+      map.flyTo([selectedEvent.lat, selectedEvent.lng], Math.max(map.getZoom(), 14), {
+        animate: true,
+        duration: 0.8,
+      });
+    }
+  }, [selectedEvent, map]);
+  return null;
+}
+
+function EventMarker({ event, isSelected, onSelectEvent }: {
+  event: Event;
+  isSelected: boolean;
+  onSelectEvent: (event: Event) => void;
+}) {
+  const markerRef = useRef<L.Marker>(null);
+
+  useEffect(() => {
+    if (isSelected && markerRef.current) {
+      markerRef.current.openPopup();
+    }
+  }, [isSelected]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[event.lat, event.lng]}
+      icon={createCategoryIcon(event.category)}
+      eventHandlers={{ click: () => onSelectEvent(event) }}
+    >
+      <Popup>
+        <div className="min-w-[180px] max-w-[240px]">
+          {event.image_url && (
+            <div className="relative w-full h-28 mb-2">
+              <Image src={event.image_url} alt={event.title} fill className="object-cover rounded" unoptimized />
+            </div>
+          )}
+          <p className="font-semibold text-sm leading-snug">{event.title}</p>
+          {event.location_name && <p className="text-xs text-gray-500 mt-0.5">{event.location_name}</p>}
+          <p className="text-xs text-gray-400 mt-1">{CATEGORY_LABELS[event.category]}</p>
+          <p className="text-xs mt-1">{formatDateTime(event.starts_at)}</p>
+          {event.ends_at && <p className="text-xs text-gray-400">– {formatDateTime(event.ends_at)}</p>}
+          {event.url && (
+            <a href={event.url} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:underline mt-2 block">Lue lisää →</a>
+          )}
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
 interface MapClientProps {
   events: Event[];
   selectedEvent: Event | null;
@@ -53,28 +109,14 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
+      <MapController selectedEvent={selectedEvent} />
       {events.map((event) => (
-        <Marker key={event.id} position={[event.lat, event.lng]} icon={createCategoryIcon(event.category)}
-          eventHandlers={{ click: () => onSelectEvent(event) }}>
-          <Popup>
-            <div className="min-w-[180px] max-w-[240px]">
-              {event.image_url && (
-                <div className="relative w-full h-28 mb-2">
-                  <Image src={event.image_url} alt={event.title} fill className="object-cover rounded" unoptimized />
-                </div>
-              )}
-              <p className="font-semibold text-sm leading-snug">{event.title}</p>
-              {event.location_name && <p className="text-xs text-gray-500 mt-0.5">{event.location_name}</p>}
-              <p className="text-xs text-gray-400 mt-1">{CATEGORY_LABELS[event.category]}</p>
-              <p className="text-xs mt-1">{formatDateTime(event.starts_at)}</p>
-              {event.ends_at && <p className="text-xs text-gray-400">– {formatDateTime(event.ends_at)}</p>}
-              {event.url && (
-                <a href={event.url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline mt-2 block">Lue lisää →</a>
-              )}
-            </div>
-          </Popup>
-        </Marker>
+        <EventMarker
+          key={event.id}
+          event={event}
+          isSelected={selectedEvent?.id === event.id}
+          onSelectEvent={onSelectEvent}
+        />
       ))}
     </MapContainer>
   );
