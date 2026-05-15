@@ -20,8 +20,8 @@ function formatDate(iso: string) {
 
 export default function EventSidebar({ events, selectedEvent, onSelectEvent, onDeleteEvent, canDelete, loading }: EventSidebarProps) {
   return (
-    <div className="w-72 bg-white border-r border-gray-200 flex flex-col h-full flex-shrink-0">
-      <div className="p-4 border-b border-gray-200">
+    <div className="bg-white flex flex-col h-full">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <h2 className="font-semibold text-gray-800">
           Tapahtumat <span className="text-gray-400 font-normal text-sm">({events.length})</span>
         </h2>

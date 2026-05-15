@@ -49,8 +49,8 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
   return (
     <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%' }} className={addingMode ? 'cursor-crosshair' : ''}>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
       {events.map((event) => (
@@ -60,13 +60,7 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
             <div className="min-w-[180px] max-w-[240px]">
               {event.image_url && (
                 <div className="relative w-full h-28 mb-2">
-                  <Image
-                    src={event.image_url}
-                    alt={event.title}
-                    fill
-                    className="object-cover rounded"
-                    unoptimized
-                  />
+                  <Image src={event.image_url} alt={event.title} fill className="object-cover rounded" unoptimized />
                 </div>
               )}
               <p className="font-semibold text-sm leading-snug">{event.title}</p>
