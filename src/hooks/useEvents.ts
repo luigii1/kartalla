@@ -12,15 +12,13 @@ export function useEvents() {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     const now = new Date().toISOString();
-    // Näytä tapahtumat jotka eivät ole päättyneet:
-    // - tulevat (starts_at >= now), TAI
-    // - parhaillaan käynnissä (ends_at >= now)
+    // ISO timestamps need quoting in PostgREST .or() to avoid parse errors
     const { data, error } = await supabase
       .from('events')
       .select(
         'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
       )
-      .or(`starts_at.gte.${now},ends_at.gte.${now}`)
+      .or(`starts_at.gte."${now}",ends_at.gte."${now}"`)
       .order('starts_at', { ascending: true });
 
     if (error) setError(error.message);
