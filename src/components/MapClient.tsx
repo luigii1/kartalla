@@ -24,6 +24,13 @@ function getBounds(map: L.Map): MapBounds {
   return { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
 }
 
+function inBounds(event: Event, bounds: MapBounds): boolean {
+  return (
+    event.lat >= bounds.south && event.lat <= bounds.north &&
+    event.lng >= bounds.west && event.lng <= bounds.east
+  );
+}
+
 function createCategoryIcon(category: EventCategory) {
   const color = CATEGORY_COLORS[category];
   return L.divIcon({
@@ -57,11 +64,23 @@ function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
   return null;
 }
 
-function BoundsController({ onMoved }: { onMoved: () => void }) {
+function BoundsController({
+  onChanged,
+}: {
+  onChanged: (bounds: MapBounds, moved: boolean) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    onChanged(getBounds(map), false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useMapEvents({
-    moveend: onMoved,
-    zoomend: onMoved,
+    moveend: () => onChanged(getBounds(map), true),
+    zoomend: () => onChanged(getBounds(map), true),
   });
+
   return null;
 }
 
@@ -119,15 +138,26 @@ export default function MapClient({
   events, selectedEvent, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
 }: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
-  const validEvents = events.filter(hasValidCoords);
   const [showSearchButton, setShowSearchButton] = useState(true);
+  const [viewBounds, setViewBounds] = useState<MapBounds | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+
+  const handleBoundsChanged = useCallback((bounds: MapBounds, moved: boolean) => {
+    setViewBounds(bounds);
+    if (moved) setShowSearchButton(true);
+  }, []);
 
   const handleSearch = useCallback(() => {
     if (!mapRef.current) return;
     onSearchArea(getBounds(mapRef.current));
     setShowSearchButton(false);
   }, [onSearchArea]);
+
+  // Vain nykyisessä näkymässä olevat markerit renderoidaan
+  const validEvents = events.filter(hasValidCoords);
+  const visibleEvents = viewBounds
+    ? validEvents.filter((e) => inBounds(e, viewBounds))
+    : validEvents;
 
   return (
     <div className="relative h-full w-full">
@@ -146,8 +176,8 @@ export default function MapClient({
         <ZoomControl position="topright" />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
         <MapController selectedEvent={selectedEvent} />
-        <BoundsController onMoved={() => setShowSearchButton(true)} />
-        {validEvents.map((event) => (
+        <BoundsController onChanged={handleBoundsChanged} />
+        {visibleEvents.map((event) => (
           <EventMarker
             key={event.id}
             event={event}
