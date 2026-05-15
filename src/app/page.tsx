@@ -16,6 +16,7 @@ export default function Home() {
   const { user, loading: authLoading, signIn, signOut } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [flyTarget, setFlyTarget] = useState<Event | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -38,12 +39,8 @@ export default function Home() {
     return result;
   }, [events, filters]);
 
-  // Karttamarkkeriklik — ei flyTo
-  const handleSelectFromMap = (event: Event | null) => {
-    setSelectedEvent(event);
-  };
+  const handleSelectFromMap = (event: Event | null) => setSelectedEvent(event);
 
-  // Listaklik — flyTo + avaa bottom sheet mobiilissa
   const handleSelectFromList = (event: Event | null) => {
     setSelectedEvent(event);
     setFlyTarget(event);
@@ -108,6 +105,7 @@ export default function Home() {
             events={filteredEvents}
             selectedEvent={selectedEvent}
             flyTarget={flyTarget}
+            hoveredEvent={hoveredEvent}
             onSelectEvent={handleSelectFromMap}
             onMapClick={handleMapClick}
             addingMode={addingMode}
@@ -122,6 +120,7 @@ export default function Home() {
             events={filteredEvents}
             selectedEvent={selectedEvent}
             onSelectEvent={handleSelectFromList}
+            onHoverEvent={setHoveredEvent}
             onDeleteEvent={deleteEvent}
             canDelete={!!user}
             loading={loading}
@@ -151,6 +150,7 @@ export default function Home() {
                   events={filteredEvents}
                   selectedEvent={selectedEvent}
                   onSelectEvent={handleSelectFromList}
+                  onHoverEvent={setHoveredEvent}
                   onDeleteEvent={deleteEvent}
                   canDelete={!!user}
                   loading={loading}

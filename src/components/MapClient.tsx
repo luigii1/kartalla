@@ -31,11 +31,17 @@ function inBounds(event: Event, bounds: MapBounds): boolean {
   );
 }
 
-function createCategoryIcon(category: EventCategory) {
+function createCategoryIcon(category: EventCategory, size: 'normal' | 'hover') {
   const color = CATEGORY_COLORS[category];
+  const px = size === 'hover' ? 30 : 22;
+  const border = size === 'hover' ? 4 : 3;
+  const shadow = size === 'hover' ? '0 3px 8px rgba(0,0,0,0.45)' : '0 2px 5px rgba(0,0,0,0.35)';
   return L.divIcon({
-    html: `<div style="background-color:${color};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>`,
-    iconSize: [22, 22], iconAnchor: [11, 22], popupAnchor: [0, -26], className: '',
+    html: `<div style="background-color:${color};width:${px}px;height:${px}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:${border}px solid white;box-shadow:${shadow};"></div>`,
+    iconSize: [px, px],
+    iconAnchor: [px / 2, px],
+    popupAnchor: [0, -(px + 4)],
+    className: '',
   });
 }
 
@@ -52,7 +58,6 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick: (lat: number,
   return null;
 }
 
-// Lentää vain kun flyTarget muuttuu (listaklik) — ei karttamarkkeriklikiltä
 function MapController({ flyTarget }: { flyTarget: Event | null }) {
   const map = useMap();
   useEffect(() => {
@@ -78,9 +83,10 @@ function BoundsController({ onChanged }: { onChanged: (bounds: MapBounds, moved:
   return null;
 }
 
-function EventMarker({ event, isSelected, onSelectEvent }: {
+function EventMarker({ event, isSelected, isHovered, onSelectEvent }: {
   event: Event;
   isSelected: boolean;
+  isHovered: boolean;
   onSelectEvent: (event: Event) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
@@ -89,11 +95,14 @@ function EventMarker({ event, isSelected, onSelectEvent }: {
     if (isSelected && markerRef.current) markerRef.current.openPopup();
   }, [isSelected]);
 
+  const icon = createCategoryIcon(event.category, isHovered ? 'hover' : 'normal');
+
   return (
     <Marker
       ref={markerRef}
       position={[event.lat, event.lng]}
-      icon={createCategoryIcon(event.category)}
+      icon={icon}
+      zIndexOffset={isHovered ? 1000 : 0}
       eventHandlers={{ click: () => onSelectEvent(event) }}
     >
       <Popup>
@@ -122,6 +131,7 @@ interface MapClientProps {
   events: Event[];
   selectedEvent: Event | null;
   flyTarget: Event | null;
+  hoveredEvent: Event | null;
   onSelectEvent: (event: Event | null) => void;
   onMapClick: (lat: number, lng: number) => void;
   addingMode: boolean;
@@ -130,7 +140,7 @@ interface MapClientProps {
 }
 
 export default function MapClient({
-  events, selectedEvent, flyTarget, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
+  events, selectedEvent, flyTarget, hoveredEvent, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
 }: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -174,6 +184,7 @@ export default function MapClient({
             key={event.id}
             event={event}
             isSelected={selectedEvent?.id === event.id}
+            isHovered={hoveredEvent?.id === event.id}
             onSelectEvent={onSelectEvent}
           />
         ))}

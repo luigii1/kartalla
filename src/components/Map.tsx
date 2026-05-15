@@ -9,6 +9,7 @@ interface MapProps {
   events: Event[];
   selectedEvent: Event | null;
   flyTarget: Event | null;
+  hoveredEvent: Event | null;
   onSelectEvent: (event: Event | null) => void;
   onMapClick: (lat: number, lng: number) => void;
   addingMode: boolean;
