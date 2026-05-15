@@ -40,7 +40,7 @@ function createClusterIcon(count: number) {
   const px = count < 10 ? 36 : count < 100 ? 44 : 52;
   const fontSize = count < 10 ? 14 : count < 100 ? 13 : 12;
   return L.divIcon({
-    html: `<div style="background:#1d4ed8;color:white;width:${px}px;height:${px}px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;font-weight:700;">${count}</div>`,
+    html: `<div style="background:#6b7280;color:white;width:${px}px;height:${px}px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;font-weight:700;">${count}</div>`,
     iconSize: [px, px],
     iconAnchor: [px / 2, px / 2],
     className: '',

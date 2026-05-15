@@ -36,7 +36,7 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   food: '#f59e0b',
   culture: '#3b82f6',
   family: '#ec4899',
-  other: '#6b7280',
+  other: '#f97316',
 };
 
 export const CATEGORY_ICONS: Record<EventCategory, string> = {
