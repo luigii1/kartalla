@@ -57,27 +57,11 @@ function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
   return null;
 }
 
-function BoundsController({
-  onReady,
-  onMoved,
-}: {
-  onReady: (bounds: MapBounds) => void;
-  onMoved: () => void;
-}) {
-  const map = useMap();
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    onReady(getBounds(map));
-  }, [map, onReady]);
-
+function BoundsController({ onMoved }: { onMoved: () => void }) {
   useMapEvents({
     moveend: onMoved,
     zoomend: onMoved,
   });
-
   return null;
 }
 
@@ -136,17 +120,13 @@ export default function MapClient({
 }: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
   const validEvents = events.filter(hasValidCoords);
-  const [showSearchButton, setShowSearchButton] = useState(false);
+  const [showSearchButton, setShowSearchButton] = useState(true);
   const mapRef = useRef<L.Map | null>(null);
 
   const handleSearch = useCallback(() => {
     if (!mapRef.current) return;
     onSearchArea(getBounds(mapRef.current));
     setShowSearchButton(false);
-  }, [onSearchArea]);
-
-  const handleReady = useCallback((bounds: MapBounds) => {
-    onSearchArea(bounds);
   }, [onSearchArea]);
 
   return (
@@ -166,7 +146,7 @@ export default function MapClient({
         <ZoomControl position="topright" />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
         <MapController selectedEvent={selectedEvent} />
-        <BoundsController onReady={handleReady} onMoved={() => setShowSearchButton(true)} />
+        <BoundsController onMoved={() => setShowSearchButton(true)} />
         {validEvents.map((event) => (
           <EventMarker
             key={event.id}
@@ -177,8 +157,14 @@ export default function MapClient({
         ))}
       </MapContainer>
 
-      {/* Etsi tältä alueelta -nappi */}
-      {showSearchButton && !loading && (
+      {loading ? (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm text-gray-500 border border-gray-200"
+          style={{ zIndex: 1000 }}
+        >
+          Ladataan...
+        </div>
+      ) : showSearchButton ? (
         <button
           onClick={handleSearch}
           className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200"
@@ -186,17 +172,7 @@ export default function MapClient({
         >
           Etsi tältä alueelta
         </button>
-      )}
-
-      {/* Latausilmaisin */}
-      {loading && (
-        <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm text-gray-500 border border-gray-200"
-          style={{ zIndex: 1000 }}
-        >
-          Ladataan...
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
