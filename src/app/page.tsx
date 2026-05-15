@@ -87,30 +87,33 @@ export default function Home() {
         </div>
       )}
 
-      {/* Desktop layout */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
-        <div className="w-72 flex-shrink-0 border-r border-gray-200 overflow-hidden">
-          <EventSidebar
-            events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={handleSelectEvent}
-            onDeleteEvent={deleteEvent} canDelete={!!user} loading={loading}
+      {/* Yksi ainoa kartta-instanssi — sidebar ja bottom sheet kelluvat sen päällä */}
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Map
+            events={filteredEvents}
+            selectedEvent={selectedEvent}
+            onSelectEvent={handleSelectEvent}
+            onMapClick={handleMapClick}
+            addingMode={addingMode}
           />
         </div>
-        <div className="flex-1 relative">
-          <Map events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={handleSelectEvent}
-            onMapClick={handleMapClick} addingMode={addingMode} />
-        </div>
-      </div>
 
-      {/* Mobile layout */}
-      <div className="flex md:hidden flex-1 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Map events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={handleSelectEvent}
-            onMapClick={handleMapClick} addingMode={addingMode} />
+        {/* Desktop sidebar — kelluu kartan päällä vasemmalla */}
+        <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col" style={{ zIndex: 400 }}>
+          <EventSidebar
+            events={filteredEvents}
+            selectedEvent={selectedEvent}
+            onSelectEvent={handleSelectEvent}
+            onDeleteEvent={deleteEvent}
+            canDelete={!!user}
+            loading={loading}
+          />
         </div>
 
-        {/* Bottom sheet */}
+        {/* Mobile bottom sheet */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 ${
+          className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 ${
             sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-56px)]'
           }`}
           style={{ zIndex: 1001, maxHeight: '70vh' }}
@@ -124,16 +127,24 @@ export default function Home() {
           </button>
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 56px)' }}>
             <EventSidebar
-              events={filteredEvents} selectedEvent={selectedEvent} onSelectEvent={handleSelectEvent}
-              onDeleteEvent={deleteEvent} canDelete={!!user} loading={loading}
+              events={filteredEvents}
+              selectedEvent={selectedEvent}
+              onSelectEvent={(e) => { handleSelectEvent(e); setSheetOpen(false); }}
+              onDeleteEvent={deleteEvent}
+              canDelete={!!user}
+              loading={loading}
             />
           </div>
         </div>
       </div>
 
       {pendingCoords && (
-        <AddEventModal lat={pendingCoords.lat} lng={pendingCoords.lng}
-          onAdd={handleAddEvent} onClose={() => setPendingCoords(null)} />
+        <AddEventModal
+          lat={pendingCoords.lat}
+          lng={pendingCoords.lng}
+          onAdd={handleAddEvent}
+          onClose={() => setPendingCoords(null)}
+        />
       )}
 
       {showAuth && <AuthModal onSignIn={signIn} onClose={() => setShowAuth(false)} />}
