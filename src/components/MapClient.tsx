@@ -163,12 +163,14 @@ export default function MapClient({
     setShowSearchButton(true);
   }, []);
 
-  const handleSearch = () => {
-    if (bounds) {
+  const handleSearch = useCallback(() => {
+    if (!bounds) return;
+    // Hide button immediately so the browser paints before the fetch starts (INP fix)
+    setShowSearchButton(false);
+    requestAnimationFrame(() => {
       onSearchArea(bounds);
-      setShowSearchButton(false);
-    }
-  };
+    });
+  }, [bounds, onSearchArea]);
 
   const visibleEvents = useMemo(
     () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
@@ -200,6 +202,7 @@ export default function MapClient({
           maxClusterRadius={50}
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
+          disableClusteringAtZoom={17}
         >
           {visibleEvents.map((event) => (
             <EventMarker
