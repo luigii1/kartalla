@@ -101,10 +101,6 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
   return null;
 }
 
-// Clicking a map marker only opens the popup — no React state update.
-// State updates cause re-renders that reset the cluster group's spiderfy state,
-// preventing the popup from opening for co-located markers.
-// Selection (sidebar highlight + flyTo) is driven exclusively from the list.
 const EventMarker = memo(function EventMarker({
   event, isHovered,
 }: {
@@ -202,7 +198,6 @@ export default function MapClient({
           maxClusterRadius={50}
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
-          disableClusteringAtZoom={17}
         >
           {visibleEvents.map((event) => (
             <EventMarker
