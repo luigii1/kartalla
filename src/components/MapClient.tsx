@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, ZoomControl, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Image from 'next/image';
-import type { Event, EventCategory } from '@/lib/types';
+import type { Event, EventCategory, MapBounds } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/types';
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -17,6 +17,11 @@ L.Icon.Default.mergeOptions({
 
 function hasValidCoords(event: Event): boolean {
   return Number.isFinite(event.lat as number) && Number.isFinite(event.lng as number);
+}
+
+function getBounds(map: L.Map): MapBounds {
+  const b = map.getBounds();
+  return { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
 }
 
 function createCategoryIcon(category: EventCategory) {
@@ -45,11 +50,34 @@ function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
   useEffect(() => {
     if (selectedEvent && hasValidCoords(selectedEvent)) {
       map.flyTo([selectedEvent.lat, selectedEvent.lng], Math.max(map.getZoom(), 14), {
-        animate: true,
-        duration: 0.8,
+        animate: true, duration: 0.8,
       });
     }
   }, [selectedEvent, map]);
+  return null;
+}
+
+function BoundsController({
+  onReady,
+  onMoved,
+}: {
+  onReady: (bounds: MapBounds) => void;
+  onMoved: () => void;
+}) {
+  const map = useMap();
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    onReady(getBounds(map));
+  }, [map, onReady]);
+
+  useMapEvents({
+    moveend: onMoved,
+    zoomend: onMoved,
+  });
+
   return null;
 }
 
@@ -61,9 +89,7 @@ function EventMarker({ event, isSelected, onSelectEvent }: {
   const markerRef = useRef<L.Marker>(null);
 
   useEffect(() => {
-    if (isSelected && markerRef.current) {
-      markerRef.current.openPopup();
-    }
+    if (isSelected && markerRef.current) markerRef.current.openPopup();
   }, [isSelected]);
 
   return (
@@ -101,35 +127,76 @@ interface MapClientProps {
   onSelectEvent: (event: Event | null) => void;
   onMapClick: (lat: number, lng: number) => void;
   addingMode: boolean;
+  onSearchArea: (bounds: MapBounds) => void;
+  loading: boolean;
 }
 
-export default function MapClient({ events, selectedEvent, onSelectEvent, onMapClick, addingMode }: MapClientProps) {
+export default function MapClient({
+  events, selectedEvent, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
+}: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
   const validEvents = events.filter(hasValidCoords);
+  const [showSearchButton, setShowSearchButton] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+
+  const handleSearch = useCallback(() => {
+    if (!mapRef.current) return;
+    onSearchArea(getBounds(mapRef.current));
+    setShowSearchButton(false);
+  }, [onSearchArea]);
+
+  const handleReady = useCallback((bounds: MapBounds) => {
+    onSearchArea(bounds);
+  }, [onSearchArea]);
 
   return (
-    <MapContainer
-      center={center}
-      zoom={12}
-      zoomControl={false}
-      style={{ height: '100%', width: '100%' }}
-      className={addingMode ? 'cursor-crosshair' : ''}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-      />
-      <ZoomControl position="topright" />
-      <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
-      <MapController selectedEvent={selectedEvent} />
-      {validEvents.map((event) => (
-        <EventMarker
-          key={event.id}
-          event={event}
-          isSelected={selectedEvent?.id === event.id}
-          onSelectEvent={onSelectEvent}
+    <div className="relative h-full w-full">
+      <MapContainer
+        ref={mapRef}
+        center={center}
+        zoom={12}
+        zoomControl={false}
+        style={{ height: '100%', width: '100%' }}
+        className={addingMode ? 'cursor-crosshair' : ''}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-      ))}
-    </MapContainer>
+        <ZoomControl position="topright" />
+        <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
+        <MapController selectedEvent={selectedEvent} />
+        <BoundsController onReady={handleReady} onMoved={() => setShowSearchButton(true)} />
+        {validEvents.map((event) => (
+          <EventMarker
+            key={event.id}
+            event={event}
+            isSelected={selectedEvent?.id === event.id}
+            onSelectEvent={onSelectEvent}
+          />
+        ))}
+      </MapContainer>
+
+      {/* Etsi tältä alueelta -nappi */}
+      {showSearchButton && !loading && (
+        <button
+          onClick={handleSearch}
+          className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200"
+          style={{ zIndex: 1000 }}
+        >
+          Etsi tältä alueelta
+        </button>
+      )}
+
+      {/* Latausilmaisin */}
+      {loading && (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm text-gray-500 border border-gray-200"
+          style={{ zIndex: 1000 }}
+        >
+          Ladataan...
+        </div>
+      )}
+    </div>
   );
 }

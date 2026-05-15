@@ -21,6 +21,13 @@ export interface Event {
 
 export type EventInsert = Omit<Event, 'id' | 'created_at'>;
 
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 export const CATEGORY_LABELS: Record<EventCategory, string> = {
   music: 'Musiikki',
   sports: 'Urheilu',
