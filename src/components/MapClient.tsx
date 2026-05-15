@@ -47,19 +47,19 @@ function createClusterIcon(count: number) {
   });
 }
 
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('fi-FI', {
-    day: 'numeric', month: 'numeric', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-}
-
-function inBounds(event: Event, bounds: MapBounds): boolean {
+export function inBounds(event: Event, bounds: MapBounds): boolean {
   return (
     Number.isFinite(event.lat) && Number.isFinite(event.lng) &&
     event.lat >= bounds.south && event.lat <= bounds.north &&
     event.lng >= bounds.west && event.lng <= bounds.east
   );
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('fi-FI', {
+    day: 'numeric', month: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 }
 
 function BoundsController({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }) {
@@ -108,7 +108,6 @@ const EventMarker = memo(function EventMarker({
   isHovered: boolean;
 }) {
   const markerRef = useRef<L.Marker>(null);
-
   return (
     <Marker
       ref={markerRef}
@@ -145,6 +144,7 @@ interface MapClientProps {
   hoveredEvent: Event | null;
   flyTarget: Event | null;
   onSearchArea: (bounds: MapBounds) => void;
+  onBoundsChange: (bounds: MapBounds) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
   loading: boolean;
@@ -152,7 +152,7 @@ interface MapClientProps {
 
 export default function MapClient({
   events, hoveredEvent, flyTarget,
-  onSearchArea, onMapClick, addingMode, loading,
+  onSearchArea, onBoundsChange, onMapClick, addingMode, loading,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -160,7 +160,8 @@ export default function MapClient({
   const handleBoundsChange = useCallback((b: MapBounds) => {
     setBounds(b);
     setShowSearchButton(true);
-  }, []);
+    onBoundsChange(b);
+  }, [onBoundsChange]);
 
   const handleSearch = useCallback(() => {
     if (!bounds) return;

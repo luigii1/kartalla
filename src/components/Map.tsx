@@ -10,6 +10,7 @@ interface MapProps {
   hoveredEvent: Event | null;
   flyTarget: Event | null;
   onSearchArea: (bounds: MapBounds) => void;
+  onBoundsChange: (bounds: MapBounds) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
   loading: boolean;

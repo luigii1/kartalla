@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import Map from '@/components/Map';
+import Map, { inBounds } from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
 import FilterBar, { defaultFilters, type Filters } from '@/components/FilterBar';
 import AddEventModal from '@/components/AddEventModal';
@@ -27,6 +27,7 @@ export default function Home() {
   const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filters, setFilters] = useState<Filters>(defaultFilters());
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -42,6 +43,12 @@ export default function Home() {
 
   const filteredEvents = useMemo(() => applyFilters(events, filters), [events, filters]);
 
+  // Only show events visible in the current viewport
+  const visibleEvents = useMemo(
+    () => mapBounds ? filteredEvents.filter((e) => inBounds(e, mapBounds)) : filteredEvents,
+    [filteredEvents, mapBounds]
+  );
+
   const handleSelectFromList = useCallback((event: Event) => {
     setSelectedEvent(event);
     setFlyTarget(event);
@@ -52,6 +59,10 @@ export default function Home() {
     lastBoundsRef.current = bounds;
     fetchByBounds(bounds, filters.dateFrom, filters.dateTo);
   }, [fetchByBounds, filters.dateFrom, filters.dateTo]);
+
+  const handleBoundsChange = useCallback((bounds: MapBounds) => {
+    setMapBounds(bounds);
+  }, []);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     if (addingMode) { setPendingCoords({ lat, lng }); setAddingMode(false); }
@@ -98,6 +109,7 @@ export default function Home() {
           hoveredEvent={hoveredEvent}
           flyTarget={flyTarget}
           onSearchArea={handleSearchArea}
+          onBoundsChange={handleBoundsChange}
           onMapClick={handleMapClick}
           addingMode={addingMode}
           loading={loading}
@@ -114,9 +126,9 @@ export default function Home() {
             Klikkaa karttaa lisätäksesi tapahtuman
           </div>
         )}
-        <FilterBar filters={filters} eventCount={filteredEvents.length} onChange={setFilters} />
+        <FilterBar filters={filters} eventCount={visibleEvents.length} onChange={setFilters} />
         <EventSidebar
-          events={filteredEvents}
+          events={visibleEvents}
           selectedEvent={selectedEvent}
           onSelectEvent={handleSelectFromList}
           onDeleteEvent={deleteEvent}
@@ -142,14 +154,14 @@ export default function Home() {
           onClick={() => setSheetOpen((p) => !p)}
           className="w-full bg-white border-t border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 flex items-center justify-between shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
         >
-          <span>Tapahtumat ({filteredEvents.length})</span>
+          <span>Tapahtumat ({visibleEvents.length})</span>
           <span className="text-gray-400">{sheetOpen ? '↓' : '↑'}</span>
         </button>
         {sheetOpen && (
           <div className="bg-white h-[60vh] flex flex-col overflow-hidden border-t border-gray-100">
-            <FilterBar filters={filters} eventCount={filteredEvents.length} onChange={setFilters} />
+            <FilterBar filters={filters} eventCount={visibleEvents.length} onChange={setFilters} />
             <EventSidebar
-              events={filteredEvents}
+              events={visibleEvents}
               selectedEvent={selectedEvent}
               onSelectEvent={handleSelectFromList}
               onDeleteEvent={deleteEvent}
