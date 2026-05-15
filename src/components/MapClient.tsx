@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, ZoomControl, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Image from 'next/image';
@@ -15,7 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// Number.isFinite rejects null/undefined/NaN without coercion (unlike isNaN)
 function hasValidCoords(event: Event): boolean {
   return Number.isFinite(event.lat as number) && Number.isFinite(event.lng as number);
 }
@@ -109,11 +108,18 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
   const validEvents = events.filter(hasValidCoords);
 
   return (
-    <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%' }} className={addingMode ? 'cursor-crosshair' : ''}>
+    <MapContainer
+      center={center}
+      zoom={12}
+      zoomControl={false}
+      style={{ height: '100%', width: '100%' }}
+      className={addingMode ? 'cursor-crosshair' : ''}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
+      <ZoomControl position="topright" />
       <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
       <MapController selectedEvent={selectedEvent} />
       {validEvents.map((event) => (
