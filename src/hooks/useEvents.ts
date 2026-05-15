@@ -11,14 +11,16 @@ export function useEvents() {
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
+    // Haetaan tapahtumat jotka alkavat nyt tai tulevaisuudessa.
+    // Käynnissä olevat (starts_at < now, ends_at > now) käsitellään
+    // client-puolella defaultFilters dateFrom-vertailulla.
     const now = new Date().toISOString();
-    // ISO timestamps need quoting in PostgREST .or() to avoid parse errors
     const { data, error } = await supabase
       .from('events')
       .select(
         'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
       )
-      .or(`starts_at.gte."${now}",ends_at.gte."${now}"`)
+      .gte('starts_at', now)
       .order('starts_at', { ascending: true });
 
     if (error) setError(error.message);
