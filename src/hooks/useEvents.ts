@@ -1,32 +1,46 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event, EventInsert } from '@/lib/types';
+import type { Event, EventInsert, MapBounds } from '@/lib/types';
+
+const PAGE_SIZE = 1000;
 
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchByBounds = useCallback(async (bounds: MapBounds) => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('events')
-      .select(
-        'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
-      )
-      .gte('starts_at', new Date().toISOString())
-      .order('starts_at', { ascending: true });
+    const now = new Date().toISOString();
+    const all: Event[] = [];
+    let from = 0;
+    try {
+      while (true) {
+        const { data, error } = await supabase
+          .from('events')
+          .select(
+            'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
+          )
+          .gte('starts_at', now)
+          .gte('lat', bounds.south)
+          .lte('lat', bounds.north)
+          .gte('lng', bounds.west)
+          .lte('lng', bounds.east)
+          .order('starts_at', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
-    if (error) setError(error.message);
-    else setEvents((data as Event[]) ?? []);
-    setLoading(false);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...(data as Event[]));
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      setEvents(all);
+    } finally {
+      setLoading(false);
+    }
   }, []);
-
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
 
   const addEvent = async (event: EventInsert) => {
     const { data, error } = await supabase.from('events').insert(event).select().single();
@@ -45,5 +59,5 @@ export function useEvents() {
     setEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
-  return { events, loading, error, addEvent, deleteEvent, refetch: fetchEvents };
+  return { events, loading, fetchByBounds, addEvent, deleteEvent };
 }

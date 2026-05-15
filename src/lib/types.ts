@@ -1,4 +1,4 @@
-export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'other';
+export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'family' | 'other';
 export type EventSource = 'manual' | 'linked_events';
 
 export interface Event {
@@ -26,6 +26,7 @@ export const CATEGORY_LABELS: Record<EventCategory, string> = {
   sports: 'Urheilu',
   food: 'Ruoka & juoma',
   culture: 'Kulttuuri',
+  family: 'Perhe',
   other: 'Muu',
 };
 
@@ -34,5 +35,22 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   sports: '#10b981',
   food: '#f59e0b',
   culture: '#3b82f6',
+  family: '#ec4899',
   other: '#6b7280',
 };
+
+export const CATEGORY_ICONS: Record<EventCategory, string> = {
+  music: '♪',
+  sports: '⚡',
+  food: '✦',
+  culture: '★',
+  family: '♥',
+  other: '●',
+};
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}

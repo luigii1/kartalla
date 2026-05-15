@@ -19,6 +19,11 @@ const YSO_MAP: Record<string, EventCategory> = {
   'yso:p8113': 'culture',  // elokuvat
   'yso:p2625': 'culture',  // festivaalit
   'yso:p14004': 'culture', // näyttelyt
+  'yso:p4354': 'family',   // lapset
+  'yso:p8524': 'family',   // perheet
+  'yso:p5590': 'family',   // lapsiperheet
+  'yso:p11617': 'family',  // lastenohjelmat
+  'yso:p3354': 'family',   // nuoret
 };
 
 export function mapKeywordsToCategory(keywords: Array<{ '@id': string }>): EventCategory {

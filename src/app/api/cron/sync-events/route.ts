@@ -14,11 +14,22 @@ export async function GET(request: NextRequest) {
   for (const source of LINKED_EVENTS_SOURCES) {
     try {
       const raw = await fetchLinkedEvents(source);
-      const events = raw
-        .map(transformLinkedEvent)
-        .filter((e): e is NonNullable<typeof e> => e !== null);
 
-      results.skipped += raw.length - events.length;
+      const transformed = raw
+        .map(transformLinkedEvent)
+        .filter((e): e is NonNullable<typeof e> => e !== null)
+        .filter((e) => e.external_id != null);
+
+      results.skipped += raw.length - transformed.length;
+
+      // Deduplicate by source:external_id before upserting
+      const seen = new Set<string>();
+      const events = transformed.filter((e) => {
+        const key = `${e.source}:${e.external_id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
       for (let i = 0; i < events.length; i += 50) {
         const batch = events.slice(i, i + 50);

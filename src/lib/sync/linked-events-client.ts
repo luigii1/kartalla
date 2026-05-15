@@ -42,6 +42,7 @@ export async function fetchLinkedEvents(
     end: daysFromNow(60),
     page_size: '100',
     event_status: 'EventScheduled',
+    include: 'location,keywords',
   });
 
   const all: LinkedEventsEvent[] = [];
