@@ -21,15 +21,17 @@ export async function GET(request: NextRequest) {
 
       const transformed = raw
         .map(transformLinkedEvent)
-        .filter((e): e is NonNullable<typeof e> => e !== null);
+        .filter((e): e is NonNullable<typeof e> => e !== null)
+        .filter((e) => e.external_id != null);
 
       results.skipped += raw.length - transformed.length;
 
-      // Deduplicate by external_id — API sometimes returns duplicates
+      // Deduplicate by source+external_id to match the unique index
       const seen = new Set<string>();
       const events = transformed.filter((e) => {
-        if (seen.has(e.external_id!)) return false;
-        seen.add(e.external_id!);
+        const key = `${e.source}:${e.external_id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
         return true;
       });
 
