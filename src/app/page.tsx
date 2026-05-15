@@ -15,6 +15,7 @@ export default function Home() {
   const { events, loading, fetchByBounds, addEvent, deleteEvent } = useEvents();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [flyTarget, setFlyTarget] = useState<Event | null>(null);
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -37,9 +38,16 @@ export default function Home() {
     return result;
   }, [events, filters]);
 
-  const handleSelectEvent = (event: Event | null) => {
+  // Karttamarkkeriklik — ei flyTo
+  const handleSelectFromMap = (event: Event | null) => {
     setSelectedEvent(event);
-    if (event) setSheetOpen(true);
+  };
+
+  // Listaklik — flyTo + avaa bottom sheet mobiilissa
+  const handleSelectFromList = (event: Event | null) => {
+    setSelectedEvent(event);
+    setFlyTarget(event);
+    if (event) setSheetOpen(false);
   };
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -49,10 +57,6 @@ export default function Home() {
   const handleAddEvent = async (event: EventInsert) => {
     await addEvent(event);
     setPendingCoords(null);
-  };
-
-  const handleSearchArea = (bounds: MapBounds) => {
-    fetchByBounds(bounds);
   };
 
   const filterBar = (
@@ -103,31 +107,27 @@ export default function Home() {
           <Map
             events={filteredEvents}
             selectedEvent={selectedEvent}
-            onSelectEvent={handleSelectEvent}
+            flyTarget={flyTarget}
+            onSelectEvent={handleSelectFromMap}
             onMapClick={handleMapClick}
             addingMode={addingMode}
-            onSearchArea={handleSearchArea}
+            onSearchArea={fetchByBounds}
             loading={loading}
           />
         </div>
 
-        {/* Desktop sidebar */}
-        <div
-          className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col"
-          style={{ zIndex: 400 }}
-        >
+        <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col" style={{ zIndex: 400 }}>
           {filterBar}
           <EventSidebar
             events={filteredEvents}
             selectedEvent={selectedEvent}
-            onSelectEvent={handleSelectEvent}
+            onSelectEvent={handleSelectFromList}
             onDeleteEvent={deleteEvent}
             canDelete={!!user}
             loading={loading}
           />
         </div>
 
-        {/* Mobile bottom sheet */}
         <div
           className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col ${
             sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-56px)]'
@@ -150,7 +150,7 @@ export default function Home() {
                 <EventSidebar
                   events={filteredEvents}
                   selectedEvent={selectedEvent}
-                  onSelectEvent={(e) => { handleSelectEvent(e); setSheetOpen(false); }}
+                  onSelectEvent={handleSelectFromList}
                   onDeleteEvent={deleteEvent}
                   canDelete={!!user}
                   loading={loading}

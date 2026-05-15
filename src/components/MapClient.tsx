@@ -52,35 +52,29 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick: (lat: number,
   return null;
 }
 
-function MapController({ selectedEvent }: { selectedEvent: Event | null }) {
+// Lentää vain kun flyTarget muuttuu (listaklik) — ei karttamarkkeriklikiltä
+function MapController({ flyTarget }: { flyTarget: Event | null }) {
   const map = useMap();
   useEffect(() => {
-    if (selectedEvent && hasValidCoords(selectedEvent)) {
-      map.flyTo([selectedEvent.lat, selectedEvent.lng], Math.max(map.getZoom(), 14), {
+    if (flyTarget && hasValidCoords(flyTarget)) {
+      map.flyTo([flyTarget.lat, flyTarget.lng], Math.max(map.getZoom(), 14), {
         animate: true, duration: 0.8,
       });
     }
-  }, [selectedEvent, map]);
+  }, [flyTarget, map]);
   return null;
 }
 
-function BoundsController({
-  onChanged,
-}: {
-  onChanged: (bounds: MapBounds, moved: boolean) => void;
-}) {
+function BoundsController({ onChanged }: { onChanged: (bounds: MapBounds, moved: boolean) => void }) {
   const map = useMap();
-
   useEffect(() => {
     onChanged(getBounds(map), false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   useMapEvents({
     moveend: () => onChanged(getBounds(map), true),
     zoomend: () => onChanged(getBounds(map), true),
   });
-
   return null;
 }
 
@@ -127,6 +121,7 @@ function EventMarker({ event, isSelected, onSelectEvent }: {
 interface MapClientProps {
   events: Event[];
   selectedEvent: Event | null;
+  flyTarget: Event | null;
   onSelectEvent: (event: Event | null) => void;
   onMapClick: (lat: number, lng: number) => void;
   addingMode: boolean;
@@ -135,7 +130,7 @@ interface MapClientProps {
 }
 
 export default function MapClient({
-  events, selectedEvent, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
+  events, selectedEvent, flyTarget, onSelectEvent, onMapClick, addingMode, onSearchArea, loading,
 }: MapClientProps) {
   const center: [number, number] = [60.1699, 24.9384];
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -153,11 +148,8 @@ export default function MapClient({
     setShowSearchButton(false);
   }, [onSearchArea]);
 
-  // Vain nykyisessä näkymässä olevat markerit renderoidaan
   const validEvents = events.filter(hasValidCoords);
-  const visibleEvents = viewBounds
-    ? validEvents.filter((e) => inBounds(e, viewBounds))
-    : validEvents;
+  const visibleEvents = viewBounds ? validEvents.filter((e) => inBounds(e, viewBounds)) : validEvents;
 
   return (
     <div className="relative h-full w-full">
@@ -175,7 +167,7 @@ export default function MapClient({
         />
         <ZoomControl position="topright" />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
-        <MapController selectedEvent={selectedEvent} />
+        <MapController flyTarget={flyTarget} />
         <BoundsController onChanged={handleBoundsChanged} />
         {visibleEvents.map((event) => (
           <EventMarker
@@ -188,10 +180,7 @@ export default function MapClient({
       </MapContainer>
 
       {loading ? (
-        <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm text-gray-500 border border-gray-200"
-          style={{ zIndex: 1000 }}
-        >
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 md:left-[calc(50%+9rem)] bg-white px-4 py-2 rounded-full shadow-md text-sm text-gray-500 border border-gray-200" style={{ zIndex: 1000 }}>
           Ladataan...
         </div>
       ) : showSearchButton ? (

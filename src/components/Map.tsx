@@ -8,6 +8,7 @@ const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 interface MapProps {
   events: Event[];
   selectedEvent: Event | null;
+  flyTarget: Event | null;
   onSelectEvent: (event: Event | null) => void;
   onMapClick: (lat: number, lng: number) => void;
   addingMode: boolean;
