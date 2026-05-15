@@ -18,6 +18,17 @@ export async function GET(request: NextRequest) {
   for (const source of LINKED_EVENTS_SOURCES) {
     try {
       const raw = await fetchLinkedEvents(source);
+
+      // Debug: log first event to inspect structure
+      if (raw.length > 0) {
+        const first = raw[0];
+        console.log('[sync] first event id:', first.id);
+        console.log('[sync] first event start_time:', first.start_time);
+        console.log('[sync] first event location:', JSON.stringify(first.location));
+        const transformed = transformLinkedEvent(first);
+        console.log('[sync] first event transformed:', transformed ? 'OK' : 'NULL');
+      }
+
       const events = raw
         .map(transformLinkedEvent)
         .filter((e): e is NonNullable<typeof e> => e !== null);
