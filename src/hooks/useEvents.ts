@@ -4,6 +4,32 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Event, EventInsert } from '@/lib/types';
 
+const PAGE_SIZE = 1000;
+
+async function fetchAllEvents(now: string): Promise<Event[]> {
+  const all: Event[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('events')
+      .select(
+        'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
+      )
+      .gte('starts_at', now)
+      .order('starts_at', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...(data as Event[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return all;
+}
+
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,17 +38,12 @@ export function useEvents() {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from('events')
-      .select(
-        'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
-      )
-      .gte('starts_at', now)
-      .order('starts_at', { ascending: true })
-      .limit(10000);
-
-    if (error) setError(error.message);
-    else setEvents((data as Event[]) ?? []);
+    try {
+      const data = await fetchAllEvents(now);
+      setEvents(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Virhe ladattaessa tapahtumia');
+    }
     setLoading(false);
   }, []);
 
