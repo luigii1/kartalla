@@ -51,6 +51,15 @@ export default function Home() {
     setPendingCoords(null);
   };
 
+  const filterBar = (
+    <FilterBar
+      filters={filters}
+      onChange={setFilters}
+      total={events.length}
+      filtered={filteredEvents.length}
+    />
+  );
+
   return (
     <div className="flex flex-col h-screen">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm z-10 flex-shrink-0">
@@ -79,16 +88,14 @@ export default function Home() {
         </div>
       </header>
 
-      <FilterBar filters={filters} onChange={setFilters} total={events.length} filtered={filteredEvents.length} />
-
       {addingMode && (
         <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 text-center flex-shrink-0">
           Klikkaa karttaa lisätäksesi tapahtuman
         </div>
       )}
 
-      {/* Yksi ainoa kartta-instanssi — sidebar ja bottom sheet kelluvat sen päällä */}
       <div className="flex-1 relative overflow-hidden">
+        {/* Kartta — aina koko ruutu taustalla */}
         <div className="absolute inset-0">
           <Map
             events={filteredEvents}
@@ -99,8 +106,12 @@ export default function Home() {
           />
         </div>
 
-        {/* Desktop sidebar — kelluu kartan päällä vasemmalla */}
-        <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col" style={{ zIndex: 400 }}>
+        {/* Desktop sidebar — kelluu vasemmalla, sisältää filtterit + listan */}
+        <div
+          className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col"
+          style={{ zIndex: 400 }}
+        >
+          {filterBar}
           <EventSidebar
             events={filteredEvents}
             selectedEvent={selectedEvent}
@@ -111,13 +122,14 @@ export default function Home() {
           />
         </div>
 
-        {/* Mobile bottom sheet */}
+        {/* Mobile bottom sheet — sisältää filtterit + listan */}
         <div
-          className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 ${
+          className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col ${
             sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-56px)]'
           }`}
-          style={{ zIndex: 1001, maxHeight: '70vh' }}
+          style={{ zIndex: 1001, maxHeight: '80vh' }}
         >
+          {/* Kahva */}
           <button
             onClick={() => setSheetOpen((o) => !o)}
             className="w-full h-14 flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
@@ -125,16 +137,23 @@ export default function Home() {
             <div className="w-8 h-1 bg-gray-300 rounded-full" />
             <span className="text-sm font-medium text-gray-700">{filteredEvents.length} tapahtumaa</span>
           </button>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 56px)' }}>
-            <EventSidebar
-              events={filteredEvents}
-              selectedEvent={selectedEvent}
-              onSelectEvent={(e) => { handleSelectEvent(e); setSheetOpen(false); }}
-              onDeleteEvent={deleteEvent}
-              canDelete={!!user}
-              loading={loading}
-            />
-          </div>
+
+          {/* Filtterit + lista näkyvät kun sheet on auki */}
+          {sheetOpen && (
+            <>
+              {filterBar}
+              <div className="flex-1 overflow-y-auto">
+                <EventSidebar
+                  events={filteredEvents}
+                  selectedEvent={selectedEvent}
+                  onSelectEvent={(e) => { handleSelectEvent(e); setSheetOpen(false); }}
+                  onDeleteEvent={deleteEvent}
+                  canDelete={!!user}
+                  loading={loading}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
