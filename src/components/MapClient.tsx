@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomControl } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Event, EventCategory, MapBounds } from '@/lib/types';
@@ -14,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// 12 possible icons (6 categories × 2 sizes) — cache to avoid recreating on every render
+// 12 possible icons (6 categories × 2 sizes) — cached to avoid recreating on every render
 const iconCache = new Map<string, L.DivIcon>();
 function createCategoryIcon(category: EventCategory, size: 'normal' | 'hover' = 'normal') {
   const key = `${category}-${size}`;
@@ -34,6 +35,17 @@ function createCategoryIcon(category: EventCategory, size: 'normal' | 'hover' = 
   });
   iconCache.set(key, divIcon);
   return divIcon;
+}
+
+function createClusterIcon(count: number) {
+  const px = count < 10 ? 36 : count < 100 ? 44 : 52;
+  const fontSize = count < 10 ? 14 : count < 100 ? 13 : 12;
+  return L.divIcon({
+    html: `<div style="background:#1d4ed8;color:white;width:${px}px;height:${px}px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;font-weight:700;">${count}</div>`,
+    iconSize: [px, px],
+    iconAnchor: [px / 2, px / 2],
+    className: '',
+  });
 }
 
 function formatDateTime(iso: string) {
@@ -90,8 +102,6 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
   return null;
 }
 
-// React.memo: only re-renders when this marker's own props change.
-// Prevents all markers re-rendering when e.g. hoveredEvent changes in parent.
 const EventMarker = memo(function EventMarker({
   event, isSelected, isHovered, onSelect,
 }: {
@@ -161,8 +171,6 @@ export default function MapClient({
     }
   };
 
-  // useMemo: recomputed only when events list or viewport bounds change,
-  // not when hoveredEvent / selectedEvent / loading change.
   const visibleEvents = useMemo(
     () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
     [events, bounds]
@@ -185,15 +193,24 @@ export default function MapClient({
         <BoundsController onBoundsChange={handleBoundsChange} />
         <MapController flyTarget={flyTarget} />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
-        {visibleEvents.map((event) => (
-          <EventMarker
-            key={event.id}
-            event={event}
-            isSelected={selectedEvent?.id === event.id}
-            isHovered={hoveredEvent?.id === event.id}
-            onSelect={onSelectEvent}
-          />
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          iconCreateFunction={(cluster: any) => createClusterIcon(cluster.getChildCount())}
+          maxClusterRadius={50}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom
+        >
+          {visibleEvents.map((event) => (
+            <EventMarker
+              key={event.id}
+              event={event}
+              isSelected={selectedEvent?.id === event.id}
+              isHovered={hoveredEvent?.id === event.id}
+              onSelect={onSelectEvent}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
 
       {showSearchButton && (
