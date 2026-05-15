@@ -171,6 +171,7 @@ export default function Home() {
             <EventSidebar
               events={visibleEvents}
               selectedEvent={selectedEvent}
+              hoveredEvent={hoveredEvent}
               onSelectEvent={handleSelectFromList}
               onDeleteEvent={deleteEvent}
               onHoverEvent={setHoveredEvent}
