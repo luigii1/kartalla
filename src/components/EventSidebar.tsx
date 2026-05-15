@@ -8,7 +8,17 @@ interface EventSidebarProps {
   selectedEvent: Event | null;
   onSelectEvent: (event: Event | null) => void;
   onDeleteEvent: (id: string) => void;
+  canDelete: boolean;
   loading: boolean;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('fi-FI', {
+    day: 'numeric',
+    month: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export default function EventSidebar({
@@ -16,6 +26,7 @@ export default function EventSidebar({
   selectedEvent,
   onSelectEvent,
   onDeleteEvent,
+  canDelete,
   loading,
 }: EventSidebarProps) {
   return (
@@ -31,18 +42,14 @@ export default function EventSidebar({
         {loading ? (
           <p className="p-4 text-sm text-gray-400">Ladataan...</p>
         ) : events.length === 0 ? (
-          <p className="p-4 text-sm text-gray-400">
-            Ei tapahtumia. Lisää tapahtuma klikkaamalla + -nappia.
-          </p>
+          <p className="p-4 text-sm text-gray-400">Ei tulevia tapahtumia.</p>
         ) : (
           events.map((event) => (
             <div
               key={event.id}
               onClick={() => onSelectEvent(selectedEvent?.id === event.id ? null : event)}
               className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                selectedEvent?.id === event.id
-                  ? 'bg-blue-50 border-l-4 border-l-blue-500'
-                  : ''
+                selectedEvent?.id === event.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -52,28 +59,26 @@ export default function EventSidebar({
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: CATEGORY_COLORS[event.category] }}
                     />
-                    <span className="text-xs text-gray-500">
-                      {CATEGORY_LABELS[event.category]}
-                    </span>
+                    <span className="text-xs text-gray-500">{CATEGORY_LABELS[event.category]}</span>
+                    {event.source === 'linked_events' && (
+                      <span className="text-xs bg-gray-100 text-gray-400 px-1 rounded">LE</span>
+                    )}
                   </div>
                   <p className="text-sm font-medium text-gray-800 truncate">{event.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {new Date(event.date).toLocaleDateString('fi-FI')}
-                  </p>
-                  {event.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{event.description}</p>
+                  {event.location_name && (
+                    <p className="text-xs text-gray-400 truncate">{event.location_name}</p>
                   )}
+                  <p className="text-xs text-gray-400 mt-0.5">{formatDate(event.starts_at)}</p>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteEvent(event.id);
-                  }}
-                  className="text-gray-300 hover:text-red-500 transition-colors text-xl leading-none flex-shrink-0 mt-0.5"
-                  title="Poista"
-                >
-                  &times;
-                </button>
+                {canDelete && event.source === 'manual' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteEvent(event.id); }}
+                    className="text-gray-300 hover:text-red-500 transition-colors text-xl leading-none flex-shrink-0 mt-0.5"
+                    title="Poista"
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
             </div>
           ))

@@ -1,21 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import type { Event, EventCategory } from '@/lib/types';
+import type { EventCategory, EventInsert } from '@/lib/types';
 import { CATEGORY_LABELS } from '@/lib/types';
 
 interface AddEventModalProps {
   lat: number;
   lng: number;
-  onAdd: (event: Omit<Event, 'id' | 'created_at'>) => Promise<void>;
+  onAdd: (event: EventInsert) => Promise<void>;
   onClose: () => void;
+}
+
+function localDateTimeDefault() {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  return d.toISOString().slice(0, 16);
 }
 
 export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<EventCategory>('other');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [locationName, setLocationName] = useState('');
+  const [startsAt, setStartsAt] = useState(localDateTimeDefault);
+  const [endsAt, setEndsAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,14 +37,21 @@ export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModa
       await onAdd({
         title: title.trim(),
         description: description.trim() || null,
-        category,
-        date,
         lat,
         lng,
+        category,
+        source: 'manual',
+        external_id: null,
+        starts_at: new Date(startsAt).toISOString(),
+        ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+        location_name: locationName.trim() || null,
+        image_url: null,
+        url: null,
+        last_synced_at: null,
       });
       onClose();
     } catch {
-      setError('Tapahtuman lisääminen epäonnistui. Tarkista Supabase-asetukset.');
+      setError('Tapahtuman lisääminen epäonnistui.');
     } finally {
       setSubmitting(false);
     }
@@ -58,9 +74,19 @@ export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModa
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Tapahtuman nimi"
               required
               autoFocus
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Paikka</label>
+            <input
+              type="text"
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+              placeholder="esim. Tampere-talo"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -73,21 +99,31 @@ export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModa
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {(Object.keys(CATEGORY_LABELS) as EventCategory[]).map((cat) => (
-                <option key={cat} value={cat}>
-                  {CATEGORY_LABELS[cat]}
-                </option>
+                <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Päivämäärä</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alkaa *</label>
+              <input
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Päättyy</label>
+              <input
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           <div>
@@ -95,7 +131,6 @@ export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModa
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Lyhyt kuvaus (valinnainen)"
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Event } from '@/lib/types';
+import type { Event, EventInsert } from '@/lib/types';
 
 export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -13,14 +13,14 @@ export function useEvents() {
     setLoading(true);
     const { data, error } = await supabase
       .from('events')
-      .select('*')
-      .order('date', { ascending: true });
+      .select(
+        'id,title,description,lat,lng,category,source,external_id,starts_at,ends_at,location_name,image_url,url,last_synced_at,created_at'
+      )
+      .gte('starts_at', new Date().toISOString())
+      .order('starts_at', { ascending: true });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setEvents(data ?? []);
-    }
+    if (error) setError(error.message);
+    else setEvents((data as Event[]) ?? []);
     setLoading(false);
   }, []);
 
@@ -28,16 +28,15 @@ export function useEvents() {
     fetchEvents();
   }, [fetchEvents]);
 
-  const addEvent = async (event: Omit<Event, 'id' | 'created_at'>) => {
-    const { data, error } = await supabase
-      .from('events')
-      .insert(event)
-      .select()
-      .single();
-
+  const addEvent = async (event: EventInsert) => {
+    const { data, error } = await supabase.from('events').insert(event).select().single();
     if (error) throw error;
-    setEvents((prev) => [...prev, data]);
-    return data;
+    setEvents((prev) =>
+      [...prev, data as Event].sort(
+        (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+      )
+    );
+    return data as Event;
   };
 
   const deleteEvent = async (id: string) => {

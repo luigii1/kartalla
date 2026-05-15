@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Event, EventCategory } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/types';
 
-// Fix Leaflet's broken default icon paths in Next.js
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -26,6 +24,16 @@ function createCategoryIcon(category: EventCategory) {
   });
 }
 
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('fi-FI', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function MapClickHandler({
   onMapClick,
   addingMode,
@@ -34,9 +42,7 @@ function MapClickHandler({
   addingMode: boolean;
 }) {
   useMapEvents({
-    click: (e) => {
-      if (addingMode) onMapClick(e.latlng.lat, e.latlng.lng);
-    },
+    click: (e) => { if (addingMode) onMapClick(e.latlng.lat, e.latlng.lng); },
   });
   return null;
 }
@@ -49,14 +55,8 @@ interface MapClientProps {
   addingMode: boolean;
 }
 
-export default function MapClient({
-  events,
-  selectedEvent,
-  onSelectEvent,
-  onMapClick,
-  addingMode,
-}: MapClientProps) {
-  const center: [number, number] = [60.1699, 24.9384]; // Helsinki
+export default function MapClient({ events, selectedEvent, onSelectEvent, onMapClick, addingMode }: MapClientProps) {
+  const center: [number, number] = [60.1699, 24.9384];
 
   return (
     <MapContainer
@@ -78,14 +78,32 @@ export default function MapClient({
           eventHandlers={{ click: () => onSelectEvent(event) }}
         >
           <Popup>
-            <div className="min-w-[150px]">
-              <p className="font-semibold text-sm">{event.title}</p>
-              <p className="text-xs text-gray-500">{CATEGORY_LABELS[event.category]}</p>
-              <p className="text-xs mt-1">
-                {new Date(event.date).toLocaleDateString('fi-FI')}
-              </p>
-              {event.description && (
-                <p className="text-xs text-gray-600 mt-1">{event.description}</p>
+            <div className="min-w-[180px] max-w-[240px]">
+              {event.image_url && (
+                <img
+                  src={event.image_url}
+                  alt={event.title}
+                  className="w-full h-28 object-cover rounded mb-2 -mx-0"
+                />
+              )}
+              <p className="font-semibold text-sm leading-snug">{event.title}</p>
+              {event.location_name && (
+                <p className="text-xs text-gray-500 mt-0.5">{event.location_name}</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">{CATEGORY_LABELS[event.category]}</p>
+              <p className="text-xs mt-1">{formatDateTime(event.starts_at)}</p>
+              {event.ends_at && (
+                <p className="text-xs text-gray-400">– {formatDateTime(event.ends_at)}</p>
+              )}
+              {event.url && (
+                <a
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline mt-2 block"
+                >
+                  Lue lisää →
+                </a>
               )}
             </div>
           </Popup>

@@ -1,3 +1,6 @@
+export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'other';
+export type EventSource = 'manual' | 'linked_events';
+
 export interface Event {
   id: string;
   title: string;
@@ -5,11 +8,18 @@ export interface Event {
   lat: number;
   lng: number;
   category: EventCategory;
-  date: string;
+  source: EventSource;
+  external_id: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  location_name: string | null;
+  image_url: string | null;
+  url: string | null;
+  last_synced_at: string | null;
   created_at: string;
 }
 
-export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'other';
+export type EventInsert = Omit<Event, 'id' | 'created_at'>;
 
 export const CATEGORY_LABELS: Record<EventCategory, string> = {
   music: 'Musiikki',
