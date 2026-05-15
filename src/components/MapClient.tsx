@@ -109,12 +109,22 @@ const EventMarker = memo(function EventMarker({
   isHovered: boolean;
   onSelect: (e: Event | null) => void;
 }) {
+  const markerRef = useRef<L.Marker>(null);
+
   return (
     <Marker
+      ref={markerRef}
       position={[event.lat, event.lng]}
       icon={createCategoryIcon(event.category, isHovered ? 'hover' : 'normal')}
       zIndexOffset={isHovered ? 1000 : isSelected ? 500 : 0}
-      eventHandlers={{ click: () => onSelect(isSelected ? null : event) }}
+      eventHandlers={{
+        click: () => {
+          onSelect(isSelected ? null : event);
+          // Explicitly open popup — needed for spiderfied markers where Leaflet's
+          // automatic popup-on-click can be interrupted by the cluster layer.
+          markerRef.current?.openPopup();
+        },
+      }}
     >
       <Popup>
         <div className="min-w-[180px] max-w-[240px]">
@@ -165,11 +175,8 @@ export default function MapClient({
 
   const handleSearch = useCallback(() => {
     if (!bounds) return;
-    // Hide button immediately so the browser paints before the fetch starts (INP fix)
     setShowSearchButton(false);
-    requestAnimationFrame(() => {
-      onSearchArea(bounds);
-    });
+    requestAnimationFrame(() => { onSearchArea(bounds); });
   }, [bounds, onSearchArea]);
 
   const visibleEvents = useMemo(
