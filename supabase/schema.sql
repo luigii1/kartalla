@@ -1,5 +1,5 @@
--- Tapahtumat-taulu
-create table public.events (
+-- Tapahtumat-taulu (alkuperäinen)
+create table if not exists public.events (
   id          uuid             default gen_random_uuid() primary key,
   title       text             not null,
   description text,
@@ -10,14 +10,7 @@ create table public.events (
   created_at  timestamptz      default timezone('utc', now()) not null
 );
 
--- Row Level Security
 alter table public.events enable row level security;
 
 create policy "Kaikki voivat lukea tapahtumat"
   on public.events for select using (true);
-
-create policy "Kaikki voivat lisätä tapahtumia"
-  on public.events for insert with check (true);
-
-create policy "Kaikki voivat poistaa tapahtumia"
-  on public.events for delete using (true);
