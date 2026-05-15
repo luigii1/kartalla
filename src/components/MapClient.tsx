@@ -102,6 +102,7 @@ function EventMarker({
       <Popup>
         <div className="min-w-[180px] max-w-[240px]">
           {event.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={event.image_url} alt={event.title} className="w-full h-28 object-cover rounded mb-2" />
           )}
           <p className="font-semibold text-sm leading-snug">{event.title}</p>
