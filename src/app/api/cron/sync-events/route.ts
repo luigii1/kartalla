@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
         const batch = events.slice(i, i + 50);
         const { error } = await supabaseAdmin
           .from('events')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .upsert(batch as any[], { onConflict: 'source,external_id' });
+          .upsert(batch as unknown as Record<string, unknown>[], { onConflict: 'source,external_id' });
 
         if (error) {
           console.error(`[sync] upsert error (${source.label}):`, error.message);

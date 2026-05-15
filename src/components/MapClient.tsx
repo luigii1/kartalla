@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import Image from 'next/image';
 import type { Event, EventCategory } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/lib/types';
 
@@ -58,7 +59,15 @@ export default function MapClient({ events, selectedEvent, onSelectEvent, onMapC
           <Popup>
             <div className="min-w-[180px] max-w-[240px]">
               {event.image_url && (
-                <img src={event.image_url} alt={event.title} className="w-full h-28 object-cover rounded mb-2" />
+                <div className="relative w-full h-28 mb-2">
+                  <Image
+                    src={event.image_url}
+                    alt={event.title}
+                    fill
+                    className="object-cover rounded"
+                    unoptimized
+                  />
+                </div>
               )}
               <p className="font-semibold text-sm leading-snug">{event.title}</p>
               {event.location_name && <p className="text-xs text-gray-500 mt-0.5">{event.location_name}</p>}
