@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import Map, { inBounds } from '@/components/Map';
+import Map from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
 import FilterBar, { defaultFilters, type Filters } from '@/components/FilterBar';
 import AddEventModal from '@/components/AddEventModal';
@@ -11,6 +11,12 @@ import AuthModal from '@/components/AuthModal';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import type { Event, EventInsert, MapBounds } from '@/lib/types';
+
+function inBounds(event: Event, bounds: MapBounds): boolean {
+  return Number.isFinite(event.lat) && Number.isFinite(event.lng) &&
+    event.lat >= bounds.south && event.lat <= bounds.north &&
+    event.lng >= bounds.west && event.lng <= bounds.east;
+}
 
 function applyFilters(events: Event[], filters: Filters): Event[] {
   let result = events.filter((e) => filters.categories.has(e.category));
