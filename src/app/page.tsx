@@ -12,7 +12,6 @@ import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import type { Event, EventInsert, MapBounds } from '@/lib/types';
 
-// Date range is handled server-side; here we only filter by category and sort.
 function applyFilters(events: Event[], filters: Filters): Event[] {
   let result = events.filter((e) => filters.categories.has(e.category));
   if (filters.sort === 'date_asc') result = [...result].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
@@ -24,19 +23,17 @@ function applyFilters(events: Event[], filters: Filters): Event[] {
 export default function Home() {
   const { events, loading, fetchByBounds, addEvent, deleteEvent } = useEvents();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [flyTarget, setFlyTarget] = useState<Event | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filters, setFilters] = useState<Filters>(defaultFilters());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
 
-  // Remember the last searched bounds so date-range changes can re-fetch automatically.
   const lastBoundsRef = useRef<MapBounds | null>(null);
 
-  // Re-fetch when date range changes, if a search has already been done.
   useEffect(() => {
     if (lastBoundsRef.current) {
       fetchByBounds(lastBoundsRef.current, filters.dateFrom, filters.dateTo);
@@ -44,10 +41,6 @@ export default function Home() {
   }, [filters.dateFrom, filters.dateTo, fetchByBounds]);
 
   const filteredEvents = useMemo(() => applyFilters(events, filters), [events, filters]);
-
-  const handleSelectFromMap = useCallback((event: Event | null) => {
-    setSelectedEvent(event);
-  }, []);
 
   const handleSelectFromList = useCallback((event: Event) => {
     setSelectedEvent(event);
@@ -102,10 +95,8 @@ export default function Home() {
       <div className="absolute inset-0 z-0">
         <Map
           events={filteredEvents}
-          selectedEvent={selectedEvent}
           hoveredEvent={hoveredEvent}
           flyTarget={flyTarget}
-          onSelectEvent={handleSelectFromMap}
           onSearchArea={handleSearchArea}
           onMapClick={handleMapClick}
           addingMode={addingMode}
@@ -113,7 +104,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Desktop sidebar */}
       <div className="hidden md:flex flex-col absolute left-0 top-0 bottom-0 w-80 z-[400] bg-white border-r border-gray-200 shadow-xl">
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
@@ -136,7 +126,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Mobile top bar */}
       <div className="md:hidden absolute top-0 left-0 right-0 z-[500] bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
         {AuthButtons}
@@ -148,7 +137,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Mobile bottom sheet */}
       <div className="md:hidden absolute bottom-0 left-0 right-0 z-[500]">
         <button
           onClick={() => setSheetOpen((p) => !p)}

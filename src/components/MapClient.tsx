@@ -101,13 +101,15 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
   return null;
 }
 
+// Clicking a map marker only opens the popup — no React state update.
+// State updates cause re-renders that reset the cluster group's spiderfy state,
+// preventing the popup from opening for co-located markers.
+// Selection (sidebar highlight + flyTo) is driven exclusively from the list.
 const EventMarker = memo(function EventMarker({
-  event, isSelected, isHovered, onSelect,
+  event, isHovered,
 }: {
   event: Event;
-  isSelected: boolean;
   isHovered: boolean;
-  onSelect: (e: Event | null) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
 
@@ -116,15 +118,8 @@ const EventMarker = memo(function EventMarker({
       ref={markerRef}
       position={[event.lat, event.lng]}
       icon={createCategoryIcon(event.category, isHovered ? 'hover' : 'normal')}
-      zIndexOffset={isHovered ? 1000 : isSelected ? 500 : 0}
-      eventHandlers={{
-        click: () => {
-          onSelect(isSelected ? null : event);
-          // Explicitly open popup — needed for spiderfied markers where Leaflet's
-          // automatic popup-on-click can be interrupted by the cluster layer.
-          markerRef.current?.openPopup();
-        },
-      }}
+      zIndexOffset={isHovered ? 1000 : 0}
+      eventHandlers={{ click: () => markerRef.current?.openPopup() }}
     >
       <Popup>
         <div className="min-w-[180px] max-w-[240px]">
@@ -151,10 +146,8 @@ const EventMarker = memo(function EventMarker({
 
 interface MapClientProps {
   events: Event[];
-  selectedEvent: Event | null;
   hoveredEvent: Event | null;
   flyTarget: Event | null;
-  onSelectEvent: (event: Event | null) => void;
   onSearchArea: (bounds: MapBounds) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
@@ -162,8 +155,8 @@ interface MapClientProps {
 }
 
 export default function MapClient({
-  events, selectedEvent, hoveredEvent, flyTarget,
-  onSelectEvent, onSearchArea, onMapClick, addingMode, loading,
+  events, hoveredEvent, flyTarget,
+  onSearchArea, onMapClick, addingMode, loading,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [showSearchButton, setShowSearchButton] = useState(true);
@@ -215,9 +208,7 @@ export default function MapClient({
             <EventMarker
               key={event.id}
               event={event}
-              isSelected={selectedEvent?.id === event.id}
               isHovered={hoveredEvent?.id === event.id}
-              onSelect={onSelectEvent}
             />
           ))}
         </MarkerClusterGroup>
