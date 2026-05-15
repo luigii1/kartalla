@@ -5,8 +5,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomContr
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Event, EventCategory, MapBounds } from '@/lib/types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/types';
 
@@ -17,7 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// 12 possible icons (6 categories × 2 sizes) — cached to avoid recreating on every render
 const iconCache = new Map<string, L.DivIcon>();
 function createCategoryIcon(category: EventCategory, size: 'normal' | 'hover' = 'normal') {
   const key = `${category}-${size}`;
