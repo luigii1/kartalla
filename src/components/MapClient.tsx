@@ -195,8 +195,9 @@ export default function MapClient({
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
         <MarkerClusterGroup
           chunkedLoading
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          iconCreateFunction={(cluster: any) => createClusterIcon(cluster.getChildCount())}
+          iconCreateFunction={(cluster: { getChildCount: () => number }) =>
+            createClusterIcon(cluster.getChildCount())
+          }
           maxClusterRadius={50}
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
