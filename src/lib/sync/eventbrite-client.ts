@@ -26,12 +26,9 @@ interface EventbriteResponse {
 }
 
 export async function fetchEventbriteEvents(): Promise<EventbriteEvent[]> {
-  const apiKey = process.env.EVENTBRITE_API_KEY;
-  if (!apiKey) {
-    console.log('[sync] Eventbrite: EVENTBRITE_API_KEY not set, skipping');
-    return [];
-  }
-  console.log('[sync] Eventbrite: API key found, fetching...');
+  // Eventbrite /events/search/ was deprecated in 2020 — no public discovery API exists anymore
+  console.log('[sync] Eventbrite: public search API no longer available, skipping');
+  return [];
 
   const now = new Date();
   const future = new Date();
