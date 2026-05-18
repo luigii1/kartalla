@@ -19,7 +19,12 @@ function inBounds(event: Event, bounds: MapBounds): boolean {
 }
 
 function applyFilters(events: Event[], filters: Filters): Event[] {
-  let result = events.filter((e) => filters.categories.has(e.category));
+  const q = filters.search.trim().toLowerCase();
+  let result = events.filter((e) => {
+    if (!filters.categories.has(e.category)) return false;
+    if (q && !e.title.toLowerCase().includes(q) && !(e.location_name ?? '').toLowerCase().includes(q)) return false;
+    return true;
+  });
   if (filters.sort === 'date_asc') result = [...result].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   else if (filters.sort === 'date_desc') result = [...result].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   else if (filters.sort === 'name_asc') result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'fi'));

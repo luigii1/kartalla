@@ -10,6 +10,7 @@ export interface Filters {
   dateFrom: string;
   dateTo: string;
   sort: SortOption;
+  search: string;
 }
 
 export function defaultFilters(): Filters {
@@ -19,6 +20,7 @@ export function defaultFilters(): Filters {
     dateFrom: today,
     dateTo: today,
     sort: 'date_asc',
+    search: '',
   };
 }
 
@@ -39,6 +41,13 @@ export default function FilterBar({ filters, eventCount, onChange }: FilterBarPr
 
   return (
     <div className="flex flex-col gap-2 p-3 border-b border-gray-100 bg-white flex-shrink-0">
+      <input
+        type="text"
+        value={filters.search}
+        onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        placeholder="Hae tapahtumia..."
+        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
       <div className="flex flex-wrap gap-1.5">
         {ALL_CATEGORIES.map((cat) => {
           const active = filters.categories.has(cat);
@@ -60,6 +69,7 @@ export default function FilterBar({ filters, eventCount, onChange }: FilterBarPr
       <div className="flex gap-2 items-center">
         <input
           type="date"
+          lang="fi"
           value={filters.dateFrom}
           onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
           className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -67,6 +77,7 @@ export default function FilterBar({ filters, eventCount, onChange }: FilterBarPr
         <span className="text-gray-400 text-xs shrink-0">–</span>
         <input
           type="date"
+          lang="fi"
           value={filters.dateTo}
           onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
           className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
