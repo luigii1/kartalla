@@ -1,6 +1,7 @@
 export interface LinkedEventsSource {
   baseUrl: string;
   label: string;
+  supportsEventStatus?: boolean;
 }
 
 // Lisää kaupunkeja tähän listaan kun endpoints on varmistettu
@@ -8,10 +9,12 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
   {
     baseUrl: 'https://api.hel.fi/linkedevents/v1',
     label: 'Helsinki',
+    supportsEventStatus: true,
   },
   {
-    baseUrl: 'http://linkedevents.tampere.fi/v1',
+    baseUrl: 'https://linkedevents.tampere.fi/v1',
     label: 'Tampere',
+    supportsEventStatus: false,
   },
 ];
 
@@ -39,13 +42,16 @@ interface ApiResponse {
 export async function fetchLinkedEvents(
   source: LinkedEventsSource
 ): Promise<LinkedEventsEvent[]> {
-  const params = new URLSearchParams({
+  const paramObj: Record<string, string> = {
     start: 'now',
     end: daysFromNow(60),
     page_size: '100',
-    event_status: 'EventScheduled',
     include: 'location,keywords',
-  });
+  };
+  if (source.supportsEventStatus !== false) {
+    paramObj.event_status = 'EventScheduled';
+  }
+  const params = new URLSearchParams(paramObj);
 
   const all: LinkedEventsEvent[] = [];
   let url: string | null = `${source.baseUrl}/event/?${params}`;
