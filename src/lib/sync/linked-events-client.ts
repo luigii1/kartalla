@@ -15,12 +15,7 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     supportsInclude: true,
   },
   // Tampere: linkedevents.tampere.fi alasajettu, siirtynyt maksulliseen Townbase-palveluun
-  {
-    baseUrl: 'https://api.turku.fi/linkedevents/v1',
-    label: 'Turku',
-    supportsEventStatus: true,
-    supportsInclude: true,
-  },
+  // Turku: api.turku.fi DNS ei löydy, lounaistieto.fi ECONNREFUSED — kaikki julkiset endpointit alasajettuja
 ];
 
 export interface LinkedEventsEvent {
