@@ -156,6 +156,7 @@ export default function Home() {
         <button
           onClick={() => setSheetOpen((p) => !p)}
           className="w-full bg-white border-t border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 flex items-center justify-between shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
           <span>Tapahtumat ({visibleEvents.length})</span>
           <span className="text-gray-400">{sheetOpen ? '↓' : '↑'}</span>
