@@ -138,7 +138,10 @@ const EventMarker = memo(function EventMarker({
           {event.location_name}
         </Tooltip>
       )}
-      <Popup autoPan={false}>
+      <Popup
+        autoPanPaddingTopLeft={L.point(10, 110)}
+        autoPanPaddingBottomRight={L.point(10, 70)}
+      >
         <div className="min-w-[180px] max-w-[240px]">
           {event.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -172,23 +175,12 @@ interface MapClientProps {
 export default function MapClient({
   events, flyTarget, onBoundsChange, onMapClick, addingMode,
 }: MapClientProps) {
-  const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [zoom, setZoom] = useState(12);
-
-  const handleBoundsChange = useCallback((b: MapBounds) => {
-    setBounds(b);
-    onBoundsChange(b);
-  }, [onBoundsChange]);
-
-  const visibleEvents = useMemo(
-    () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
-    [events, bounds]
-  );
 
   // Group events by exact lat/lng to detect same-location clusters
   const locationGroups = useMemo(() => {
     const groups = new Map<string, { lat: number; lng: number; name: string; count: number }>();
-    for (const e of visibleEvents) {
+    for (const e of events) {
       const key = `${e.lat},${e.lng}`;
       if (!groups.has(key)) {
         groups.set(key, { lat: e.lat, lng: e.lng, name: e.location_name ?? '', count: 0 });
@@ -223,7 +215,7 @@ export default function MapClient({
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        <BoundsController onBoundsChange={handleBoundsChange} />
+        <BoundsController onBoundsChange={onBoundsChange} />
         <MapController flyTarget={flyTarget} />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
         <ZoomTracker onChange={setZoom} />
@@ -236,7 +228,7 @@ export default function MapClient({
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
         >
-          {visibleEvents.map((event) => (
+          {events.map((event) => (
             <EventMarker
               key={event.id}
               event={event}
