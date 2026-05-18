@@ -13,11 +13,24 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     supportsEventStatus: true,
     supportsInclude: true,
   },
+  // Tampere: linkedevents.tampere.fi alasajettu, siirtynyt maksulliseen Townbase-palveluun
   {
-    baseUrl: 'http://linkedevents.tampere.fi/v1',
-    label: 'Tampere',
-    supportsEventStatus: false,
-    supportsInclude: false,
+    baseUrl: 'https://kalenteri.turku.fi/v1',
+    label: 'Turku',
+    supportsEventStatus: true,
+    supportsInclude: true,
+  },
+  {
+    baseUrl: 'https://linkedevents.vantaa.fi/v1',
+    label: 'Vantaa',
+    supportsEventStatus: true,
+    supportsInclude: true,
+  },
+  {
+    baseUrl: 'https://linkedevents.espoo.fi/v1',
+    label: 'Espoo',
+    supportsEventStatus: true,
+    supportsInclude: true,
   },
 ];
 
