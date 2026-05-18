@@ -13,12 +13,8 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     supportsEventStatus: true,
     supportsInclude: true,
   },
-  {
-    baseUrl: 'http://linkedevents.tampere.fi/v1',
-    label: 'Tampere',
-    supportsEventStatus: false,
-    supportsInclude: false,
-  },
+  // Tampere: endpoint palauttaa 400, oikea URL pitää selvittää
+  // { baseUrl: 'http://linkedevents.tampere.fi/v1', label: 'Tampere', supportsEventStatus: false, supportsInclude: false },
 ];
 
 export interface LinkedEventsEvent {
