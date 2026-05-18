@@ -128,10 +128,14 @@ export default function Home() {
         </div>
 
         <div
-          className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col ${
-            sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-56px)]'
-          }`}
-          style={{ zIndex: 1001, maxHeight: '80vh' }}
+          className="md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col"
+          style={{
+            zIndex: 1001,
+            maxHeight: '80vh',
+            transform: sheetOpen
+              ? 'translateY(0)'
+              : 'translateY(calc(100% - 56px - env(safe-area-inset-bottom, 0px)))',
+          }}
         >
           <button
             onClick={() => setSheetOpen((o) => !o)}
@@ -158,6 +162,7 @@ export default function Home() {
               </div>
             </>
           )}
+          <div style={{ height: 'env(safe-area-inset-bottom, 0px)', flexShrink: 0 }} />
         </div>
       </div>
 
