@@ -1,169 +1,207 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Map from '@/components/Map';
 import EventSidebar from '@/components/EventSidebar';
+import FilterBar, { defaultFilters, type Filters } from '@/components/FilterBar';
 import AddEventModal from '@/components/AddEventModal';
 import AuthModal from '@/components/AuthModal';
-import FilterBar, { defaultFilters } from '@/components/FilterBar';
-import type { Filters } from '@/components/FilterBar';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import type { Event, EventInsert, MapBounds } from '@/lib/types';
 
+function inBounds(event: Event, bounds: MapBounds): boolean {
+  return Number.isFinite(event.lat) && Number.isFinite(event.lng) &&
+    event.lat >= bounds.south && event.lat <= bounds.north &&
+    event.lng >= bounds.west && event.lng <= bounds.east;
+}
+
+function applyFilters(events: Event[], filters: Filters): Event[] {
+  const q = filters.search.trim().toLowerCase();
+  let result = events.filter((e) => {
+    if (!filters.categories.has(e.category)) return false;
+    if (q && !e.title.toLowerCase().includes(q) && !(e.location_name ?? '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (filters.sort === 'date_asc') result = [...result].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  else if (filters.sort === 'date_desc') result = [...result].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  else if (filters.sort === 'name_asc') result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'fi'));
+  return result;
+}
+
 export default function Home() {
   const { events, loading, fetchByBounds, addEvent, deleteEvent } = useEvents();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [flyTarget, setFlyTarget] = useState<Event | null>(null);
-  const [hoveredEvent, setHoveredEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [filters, setFilters] = useState<Filters>(defaultFilters());
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [showSearchButton, setShowSearchButton] = useState(false);
 
-  const filteredEvents = useMemo(() => {
-    let result = events.filter((e) => {
-      if (!filters.categories.has(e.category)) return false;
-      const day = e.starts_at.slice(0, 10);
-      if (filters.dateFrom && day < filters.dateFrom) return false;
-      if (filters.dateTo && day > filters.dateTo) return false;
-      return true;
-    });
-    if (filters.sort === 'date_desc') {
-      result = [...result].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
-    } else if (filters.sort === 'name_asc') {
-      result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'fi'));
+  const lastBoundsRef = useRef<MapBounds | null>(null);
+
+  useEffect(() => {
+    if (lastBoundsRef.current) {
+      fetchByBounds(lastBoundsRef.current, filters.dateFrom, filters.dateTo);
     }
-    return result;
-  }, [events, filters]);
+  }, [filters.dateFrom, filters.dateTo, fetchByBounds]);
 
-  const handleSelectFromMap = (event: Event | null) => setSelectedEvent(event);
+  const filteredEvents = useMemo(() => applyFilters(events, filters), [events, filters]);
 
-  const handleSelectFromList = (event: Event | null) => {
+  // Only show events visible in the current viewport
+  const visibleEvents = useMemo(
+    () => mapBounds ? filteredEvents.filter((e) => inBounds(e, mapBounds)) : filteredEvents,
+    [filteredEvents, mapBounds]
+  );
+
+  const handleSelectFromList = useCallback((event: Event) => {
     setSelectedEvent(event);
     setFlyTarget(event);
-    if (event) setSheetOpen(false);
-  };
+    setSheetOpen(false);
+  }, []);
 
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleSearch = useCallback(() => {
+    if (!mapBounds) return;
+    lastBoundsRef.current = mapBounds;
+    fetchByBounds(mapBounds, filters.dateFrom, filters.dateTo);
+    setShowSearchButton(false);
+  }, [mapBounds, fetchByBounds, filters.dateFrom, filters.dateTo]);
+
+  const handleBoundsChange = useCallback((bounds: MapBounds) => {
+    setMapBounds(bounds);
+    setShowSearchButton(true);
+  }, []);
+
+  const handleMapClick = useCallback((lat: number, lng: number) => {
     if (addingMode) { setPendingCoords({ lat, lng }); setAddingMode(false); }
-  };
+  }, [addingMode]);
 
   const handleAddEvent = async (event: EventInsert) => {
     await addEvent(event);
     setPendingCoords(null);
   };
 
-  const filterBar = (
-    <FilterBar
-      filters={filters}
-      onChange={setFilters}
-      total={events.length}
-      filtered={filteredEvents.length}
-    />
+  const AuthButtons = (
+    <div className="flex items-center gap-2">
+      {user ? (
+        <>
+          <button
+            onClick={() => { setAddingMode((p) => !p); setPendingCoords(null); }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              addingMode ? 'bg-red-100 text-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {addingMode ? '✕ Peruuta' : '+ Lisää'}
+          </button>
+          <button onClick={() => signOut()} className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100">
+            Ulos
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setShowAuth(true)}
+          disabled={authLoading}
+          className="px-3 py-1.5 rounded-lg text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Kirjaudu
+        </button>
+      )}
+    </div>
   );
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm z-10 flex-shrink-0">
-        <h1 className="text-xl font-bold text-gray-900">Kartalla</h1>
-        <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              <button
-                onClick={() => { setAddingMode((prev) => !prev); setPendingCoords(null); }}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  addingMode ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}>
-                {addingMode ? '✕ Peruuta' : '+ Lisää'}
-              </button>
-              <button onClick={() => signOut()}
-                className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors">
-                Ulos
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setShowAuth(true)} disabled={authLoading}
-              className="px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-              Kirjaudu
-            </button>
-          )}
+    <div className="relative h-dvh w-screen overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Map
+          events={filteredEvents}
+          flyTarget={flyTarget}
+          onBoundsChange={handleBoundsChange}
+          onMapClick={handleMapClick}
+          addingMode={addingMode}
+        />
+      </div>
+
+      <div className="hidden md:flex flex-col absolute left-0 top-0 bottom-0 w-80 z-[400] bg-white border-r border-gray-200 shadow-xl">
+        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+          <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
+          {AuthButtons}
         </div>
-      </header>
+        {addingMode && (
+          <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 text-xs text-blue-700 text-center flex-shrink-0">
+            Klikkaa karttaa lisätäksesi tapahtuman
+          </div>
+        )}
+        <FilterBar filters={filters} eventCount={visibleEvents.length} onChange={setFilters} />
+        <EventSidebar
+          events={visibleEvents}
+          selectedEvent={selectedEvent}
+          onSelectEvent={handleSelectFromList}
+          onDeleteEvent={deleteEvent}
+          canDelete={!!user}
+          loading={loading}
+        />
+      </div>
+
+      <div
+        className="md:hidden absolute top-0 left-0 right-0 z-[500] bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 flex items-center justify-between"
+        style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top, 0px))', paddingBottom: '0.625rem' }}
+      >
+        <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
+        {AuthButtons}
+      </div>
+
+      {showSearchButton && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-[500] md:left-[calc(50%+10rem)]"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 60px)' }}
+        >
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="bg-white shadow-lg rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-60 whitespace-nowrap"
+          >
+            {loading ? 'Haetaan...' : 'Etsi tältä alueelta'}
+          </button>
+        </div>
+      )}
 
       {addingMode && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 text-center flex-shrink-0">
+        <div
+          className="md:hidden absolute left-0 right-0 z-[500] bg-blue-50 border-b border-blue-100 px-4 py-2 text-xs text-blue-700 text-center"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 44px)' }}
+        >
           Klikkaa karttaa lisätäksesi tapahtuman
         </div>
       )}
 
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Map
-            events={filteredEvents}
-            selectedEvent={selectedEvent}
-            flyTarget={flyTarget}
-            hoveredEvent={hoveredEvent}
-            onSelectEvent={handleSelectFromMap}
-            onMapClick={handleMapClick}
-            addingMode={addingMode}
-            onSearchArea={fetchByBounds}
-            loading={loading}
-          />
-        </div>
-
-        <div className="hidden md:flex absolute left-0 top-0 bottom-0 w-72 bg-white shadow-md flex-col" style={{ zIndex: 400 }}>
-          {filterBar}
-          <EventSidebar
-            events={filteredEvents}
-            selectedEvent={selectedEvent}
-            onSelectEvent={handleSelectFromList}
-            onHoverEvent={setHoveredEvent}
-            onDeleteEvent={deleteEvent}
-            canDelete={!!user}
-            loading={loading}
-          />
-        </div>
-
-        <div
-          className="md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col"
-          style={{
-            zIndex: 1001,
-            maxHeight: '80vh',
-            transform: sheetOpen
-              ? 'translateY(0)'
-              : 'translateY(calc(100% - 56px - env(safe-area-inset-bottom, 0px)))',
-          }}
+      <div className="md:hidden absolute bottom-0 left-0 right-0 z-[500]">
+        <button
+          onClick={() => setSheetOpen((p) => !p)}
+          className="w-full bg-white border-t border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 flex items-center justify-between shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
-          <button
-            onClick={() => setSheetOpen((o) => !o)}
-            className="w-full h-14 flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
-          >
-            <div className="w-8 h-1 bg-gray-300 rounded-full" />
-            <span className="text-sm font-medium text-gray-700">
-              {loading ? 'Ladataan...' : `${filteredEvents.length} tapahtumaa`}
-            </span>
-          </button>
-          {sheetOpen && (
-            <>
-              {filterBar}
-              <div className="flex-1 overflow-y-auto">
-                <EventSidebar
-                  events={filteredEvents}
-                  selectedEvent={selectedEvent}
-                  onSelectEvent={handleSelectFromList}
-                  onHoverEvent={setHoveredEvent}
-                  onDeleteEvent={deleteEvent}
-                  canDelete={!!user}
-                  loading={loading}
-                />
-              </div>
-            </>
-          )}
-          <div style={{ height: 'env(safe-area-inset-bottom, 0px)', flexShrink: 0 }} />
-        </div>
+          <span>Tapahtumat ({visibleEvents.length})</span>
+          <span className="text-gray-400">{sheetOpen ? '↓' : '↑'}</span>
+        </button>
+        {sheetOpen && (
+          <div className="bg-white h-[60vh] flex flex-col overflow-hidden border-t border-gray-100">
+            <FilterBar filters={filters} eventCount={visibleEvents.length} onChange={setFilters} />
+            <EventSidebar
+              events={visibleEvents}
+              selectedEvent={selectedEvent}
+              onSelectEvent={handleSelectFromList}
+              onDeleteEvent={deleteEvent}
+              canDelete={!!user}
+              loading={loading}
+            />
+          </div>
+        )}
       </div>
 
       {pendingCoords && (
@@ -174,7 +212,6 @@ export default function Home() {
           onClose={() => setPendingCoords(null)}
         />
       )}
-
       {showAuth && <AuthModal onSignIn={signIn} onClose={() => setShowAuth(false)} />}
     </div>
   );

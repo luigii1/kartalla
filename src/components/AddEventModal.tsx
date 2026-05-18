@@ -15,8 +15,7 @@ function localDateTimeDefault() {
   const d = new Date();
   d.setMinutes(0, 0, 0);
   d.setHours(d.getHours() + 1);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return d.toISOString().slice(0, 16);
 }
 
 export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModalProps) {
@@ -63,51 +62,95 @@ export default function AddEventModal({ lat, lng, onAdd, onClose }: AddEventModa
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div className="p-5 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-800">Uusi tapahtuma</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{lat.toFixed(5)}, {lng.toFixed(5)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {lat.toFixed(5)}, {lng.toFixed(5)}
+          </p>
         </div>
+
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nimi *</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              autoFocus
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Paikka</label>
-            <input type="text" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="esim. Tampere-talo"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              type="text"
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+              placeholder="esim. Tampere-talo"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value as EventCategory)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as EventCategory)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               {(Object.keys(CATEGORY_LABELS) as EventCategory[]).map((cat) => (
                 <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
               ))}
             </select>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Alkaa *</label>
-              <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Päättyy</label>
-              <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Kuvaus</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
           </div>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
+
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">Peruuta</button>
-            <button type="submit" disabled={submitting || !title.trim()}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Peruuta
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !title.trim()}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
               {submitting ? 'Lisätään...' : 'Lisää tapahtuma'}
             </button>
           </div>

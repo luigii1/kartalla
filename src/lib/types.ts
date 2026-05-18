@@ -1,5 +1,5 @@
-export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'other';
-export type EventSource = 'manual' | 'linked_events';
+export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'family' | 'other';
+export type EventSource = 'manual' | 'linked_events' | 'eventbrite';
 
 export interface Event {
   id: string;
@@ -21,18 +21,12 @@ export interface Event {
 
 export type EventInsert = Omit<Event, 'id' | 'created_at'>;
 
-export interface MapBounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-}
-
 export const CATEGORY_LABELS: Record<EventCategory, string> = {
   music: 'Musiikki',
   sports: 'Urheilu',
   food: 'Ruoka & juoma',
   culture: 'Kulttuuri',
+  family: 'Perhe',
   other: 'Muu',
 };
 
@@ -41,5 +35,22 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   sports: '#10b981',
   food: '#f59e0b',
   culture: '#3b82f6',
-  other: '#6b7280',
+  family: '#ec4899',
+  other: '#f97316',
 };
+
+export const CATEGORY_ICONS: Record<EventCategory, string> = {
+  music: '♪',
+  sports: '⚡',
+  food: '✦',
+  culture: '★',
+  family: '♥',
+  other: '●',
+};
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}

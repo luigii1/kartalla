@@ -1,34 +1,39 @@
--- Laajennetaan events-taulua
-alter table public.events
-  add column if not exists source         text        not null default 'manual',
-  add column if not exists external_id    text,
-  add column if not exists starts_at      timestamptz,
-  add column if not exists ends_at        timestamptz,
-  add column if not exists location_name  text,
-  add column if not exists image_url      text,
-  add column if not exists url            text,
-  add column if not exists last_synced_at timestamptz,
-  add column if not exists raw_data       jsonb;
+-- Laajennetaan events-taulua: uudet kentät, auth-pohjainen RLS
 
-update public.events
-  set starts_at = (date::text || 'T00:00:00+00:00')::timestamptz
-  where starts_at is null;
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS source         text        NOT NULL DEFAULT 'manual',
+  ADD COLUMN IF NOT EXISTS external_id    text,
+  ADD COLUMN IF NOT EXISTS starts_at      timestamptz,
+  ADD COLUMN IF NOT EXISTS ends_at        timestamptz,
+  ADD COLUMN IF NOT EXISTS location_name  text,
+  ADD COLUMN IF NOT EXISTS image_url      text,
+  ADD COLUMN IF NOT EXISTS url            text,
+  ADD COLUMN IF NOT EXISTS last_synced_at timestamptz,
+  ADD COLUMN IF NOT EXISTS raw_data       jsonb;
 
-alter table public.events alter column starts_at set not null;
+-- Migroi olemassa oleva date → starts_at
+UPDATE public.events
+  SET starts_at = (date::text || 'T00:00:00+00:00')::timestamptz
+  WHERE starts_at IS NULL;
 
-create unique index if not exists events_source_external_id_idx
-  on public.events (source, external_id);
+ALTER TABLE public.events
+  ALTER COLUMN starts_at SET NOT NULL;
 
-create index if not exists events_starts_at_idx
-  on public.events (starts_at);
+-- Uniikki indeksi duplikaattien estoon (NULL != NULL Postgresissa, joten manual-rivit eivät konfliktoidu)
+CREATE UNIQUE INDEX IF NOT EXISTS events_source_external_id_idx
+  ON public.events (source, external_id);
 
-drop policy if exists "Kaikki voivat lisätä tapahtumia" on public.events;
-drop policy if exists "Kaikki voivat poistaa tapahtumia" on public.events;
+CREATE INDEX IF NOT EXISTS events_starts_at_idx
+  ON public.events (starts_at);
 
-create policy "Kirjautuneet voivat lisätä tapahtumia"
-  on public.events for insert
-  with check (auth.role() = 'authenticated' and source = 'manual');
+-- Päivitä RLS: kirjoittaminen vaatii kirjautumisen
+DROP POLICY IF EXISTS "Kaikki voivat lisätä tapahtumia" ON public.events;
+DROP POLICY IF EXISTS "Kaikki voivat poistaa tapahtumia" ON public.events;
 
-create policy "Kirjautuneet voivat poistaa tapahtumia"
-  on public.events for delete
-  using (auth.role() = 'authenticated' and source = 'manual');
+CREATE POLICY "Kirjautuneet voivat lisätä tapahtumia"
+  ON public.events FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated' AND source = 'manual');
+
+CREATE POLICY "Kirjautuneet voivat poistaa tapahtumia"
+  ON public.events FOR DELETE
+  USING (auth.role() = 'authenticated' AND source = 'manual');

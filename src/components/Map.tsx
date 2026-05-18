@@ -7,16 +7,16 @@ const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 
 interface MapProps {
   events: Event[];
-  selectedEvent: Event | null;
   flyTarget: Event | null;
-  hoveredEvent: Event | null;
-  onSelectEvent: (event: Event | null) => void;
-  onMapClick: (lat: number, lng: number) => void;
-  addingMode: boolean;
-  onSearchArea: (bounds: MapBounds) => void;
-  loading: boolean;
+  onBoundsChange: (bounds: MapBounds) => void;
+  onMapClick?: (lat: number, lng: number) => void;
+  addingMode?: boolean;
 }
 
 export default function Map(props: MapProps) {
-  return <div className="w-full h-full"><MapClient {...props} /></div>;
+  return (
+    <div className="w-full h-full">
+      <MapClient {...props} />
+    </div>
+  );
 }

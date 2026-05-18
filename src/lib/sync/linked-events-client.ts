@@ -1,15 +1,21 @@
 export interface LinkedEventsSource {
   baseUrl: string;
   label: string;
+  supportsEventStatus?: boolean;
+  supportsInclude?: boolean;
 }
 
+// Lisää kaupunkeja tähän listaan kun endpoints on varmistettu
 export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
   {
+    // Kattaa myös Espoon, Vantaan ja Kauniaisen
     baseUrl: 'https://api.hel.fi/linkedevents/v1',
     label: 'Helsinki',
+    supportsEventStatus: true,
+    supportsInclude: true,
   },
-  // Tampere — vahvista endpoint ennen käyttöönottoa
-  // { baseUrl: 'https://linkedevents.tampere.fi/api/v1', label: 'Tampere' },
+  // Tampere: linkedevents.tampere.fi alasajettu, siirtynyt maksulliseen Townbase-palveluun
+  // Turku: api.turku.fi DNS ei löydy, lounaistieto.fi ECONNREFUSED — kaikki julkiset endpointit alasajettuja
 ];
 
 export interface LinkedEventsEvent {
@@ -33,27 +39,41 @@ interface ApiResponse {
   meta: { next: string | null };
 }
 
-export async function fetchLinkedEvents(source: LinkedEventsSource): Promise<LinkedEventsEvent[]> {
-  const params = new URLSearchParams({
-    start: 'now',
+export async function fetchLinkedEvents(
+  source: LinkedEventsSource
+): Promise<LinkedEventsEvent[]> {
+  const paramObj: Record<string, string> = {
+    start: todayIso(),
     end: daysFromNow(60),
     page_size: '100',
-    event_status: 'EventScheduled',
-    include: 'location,keywords',
-  });
+  };
+  if (source.supportsEventStatus !== false) {
+    paramObj.event_status = 'EventScheduled';
+  }
+  if (source.supportsInclude !== false) {
+    paramObj.include = 'location,keywords';
+  }
+  const params = new URLSearchParams(paramObj);
 
   const all: LinkedEventsEvent[] = [];
   let url: string | null = `${source.baseUrl}/event/?${params}`;
 
   while (url) {
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`${source.label} API error: ${res.status}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`${source.label} API error: ${res.status} — url: ${url} — body: ${body.slice(0, 300)}`);
+    }
     const json: ApiResponse = await res.json();
     all.push(...json.data);
     url = json.meta.next;
   }
 
   return all;
+}
+
+function todayIso(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 function daysFromNow(days: number): string {

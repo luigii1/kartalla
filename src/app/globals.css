@@ -2,6 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
-.leaflet-container { height: 100%; width: 100%; }
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* leaflet.markercluster — cluster animations and spiderfy legs */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+.leaflet-cluster-spider-leg {
+  display: none !important;
+  stroke-opacity: 0 !important;
+}
+
+.marker-cluster {
+  background-clip: padding-box;
+  border-radius: 20px;
+}
+.marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 5px;
+  text-align: center;
+  border-radius: 15px;
+  font: bold 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.marker-cluster span {
+  line-height: 30px;
+}
+
+/* Location name label shown at zoom 16+ */
+.marker-label {
+  background: white;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.marker-label::before {
+  display: none;
+}
