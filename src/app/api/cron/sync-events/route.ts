@@ -50,6 +50,18 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Poistetaan menneet tapahtumat
+  const { error: cleanupError, count } = await supabaseAdmin
+    .from('events')
+    .delete({ count: 'exact' })
+    .lt('starts_at', new Date().toISOString());
+
+  if (cleanupError) {
+    console.error('[sync] cleanup error:', cleanupError.message);
+  } else {
+    console.log('[sync] deleted past events:', count);
+  }
+
   console.log('[sync] done', results);
-  return NextResponse.json({ ok: true, ...results });
+  return NextResponse.json({ ok: true, ...results, deleted: count ?? 0 });
 }
