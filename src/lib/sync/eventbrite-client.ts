@@ -27,7 +27,11 @@ interface EventbriteResponse {
 
 export async function fetchEventbriteEvents(): Promise<EventbriteEvent[]> {
   const apiKey = process.env.EVENTBRITE_API_KEY;
-  if (!apiKey) return [];
+  if (!apiKey) {
+    console.log('[sync] Eventbrite: EVENTBRITE_API_KEY not set, skipping');
+    return [];
+  }
+  console.log('[sync] Eventbrite: API key found, fetching...');
 
   const now = new Date();
   const future = new Date();
