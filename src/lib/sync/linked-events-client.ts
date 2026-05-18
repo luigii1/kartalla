@@ -8,6 +8,7 @@ export interface LinkedEventsSource {
 // Lisää kaupunkeja tähän listaan kun endpoints on varmistettu
 export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
   {
+    // Kattaa myös Espoon, Vantaan ja Kauniaisen
     baseUrl: 'https://api.hel.fi/linkedevents/v1',
     label: 'Helsinki',
     supportsEventStatus: true,
@@ -15,20 +16,8 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
   },
   // Tampere: linkedevents.tampere.fi alasajettu, siirtynyt maksulliseen Townbase-palveluun
   {
-    baseUrl: 'https://kalenteri.turku.fi/v1',
+    baseUrl: 'https://api.turku.fi/linkedevents/v1',
     label: 'Turku',
-    supportsEventStatus: true,
-    supportsInclude: true,
-  },
-  {
-    baseUrl: 'https://linkedevents.vantaa.fi/v1',
-    label: 'Vantaa',
-    supportsEventStatus: true,
-    supportsInclude: true,
-  },
-  {
-    baseUrl: 'https://linkedevents.espoo.fi/v1',
-    label: 'Espoo',
     supportsEventStatus: true,
     supportsInclude: true,
   },
