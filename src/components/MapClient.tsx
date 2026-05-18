@@ -188,7 +188,7 @@ export default function MapClient({
       groups.get(key)!.count++;
     }
     return groups;
-  }, [visibleEvents]);
+  }, [events]);
 
   // Keys with 2+ events at the same location (will be a spider cluster)
   const multiLocKeys = useMemo(() => {
