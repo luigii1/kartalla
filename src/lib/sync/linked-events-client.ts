@@ -2,6 +2,7 @@ export interface LinkedEventsSource {
   baseUrl: string;
   label: string;
   supportsEventStatus?: boolean;
+  supportsInclude?: boolean;
 }
 
 // Lisää kaupunkeja tähän listaan kun endpoints on varmistettu
@@ -10,11 +11,13 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     baseUrl: 'https://api.hel.fi/linkedevents/v1',
     label: 'Helsinki',
     supportsEventStatus: true,
+    supportsInclude: true,
   },
   {
     baseUrl: 'http://linkedevents.tampere.fi/v1',
     label: 'Tampere',
     supportsEventStatus: false,
+    supportsInclude: false,
   },
 ];
 
@@ -43,13 +46,15 @@ export async function fetchLinkedEvents(
   source: LinkedEventsSource
 ): Promise<LinkedEventsEvent[]> {
   const paramObj: Record<string, string> = {
-    start: 'now',
+    start: todayIso(),
     end: daysFromNow(60),
     page_size: '100',
-    include: 'location,keywords',
   };
   if (source.supportsEventStatus !== false) {
     paramObj.event_status = 'EventScheduled';
+  }
+  if (source.supportsInclude !== false) {
+    paramObj.include = 'location,keywords';
   }
   const params = new URLSearchParams(paramObj);
 
@@ -65,6 +70,10 @@ export async function fetchLinkedEvents(
   }
 
   return all;
+}
+
+function todayIso(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 function daysFromNow(days: number): string {
