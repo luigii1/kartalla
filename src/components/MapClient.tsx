@@ -110,9 +110,11 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
 const EventMarker = memo(function EventMarker({
   event,
   showLabel,
+  isSpiderfied,
 }: {
   event: Event;
   showLabel: boolean;
+  isSpiderfied: boolean;
 }) {
   const markerRef = useRef<L.Marker>(null);
   return (
@@ -120,10 +122,19 @@ const EventMarker = memo(function EventMarker({
       ref={markerRef}
       position={[event.lat, event.lng]}
       icon={createCategoryIcon(event.category, 'normal')}
+      alt={event.id}
+      title={event.location_name ?? undefined}
       eventHandlers={{ click: () => markerRef.current?.openPopup() }}
     >
-      {showLabel && event.location_name && (
-        <Tooltip permanent direction="top" offset={[0, -28]} className="marker-label">
+      {showLabel && !isSpiderfied && event.location_name && (
+        <Tooltip
+          permanent
+          direction="top"
+          offset={[0, -28]}
+          className="marker-label"
+          interactive
+          eventHandlers={{ click: () => markerRef.current?.openPopup() }}
+        >
           {event.location_name}
         </Tooltip>
       )}
@@ -166,6 +177,11 @@ export default function MapClient({
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [zoom, setZoom] = useState(12);
+  const [spiderfiedData, setSpiderfiedData] = useState<{
+    center: [number, number];
+    name: string;
+    ids: Set<string>;
+  } | null>(null);
 
   const handleBoundsChange = useCallback((b: MapBounds) => {
     setBounds(b);
@@ -204,11 +220,37 @@ export default function MapClient({
           maxClusterRadius={50}
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
+          eventHandlers={{
+            spiderfied: (e: any) => {
+              const markers: L.Marker[] = e.cluster.getAllChildMarkers();
+              const ids = new Set(markers.map((m) => m.options.alt as string).filter(Boolean));
+              const { lat, lng } = e.cluster.getLatLng();
+              const name = (markers[0]?.options.title as string) || '';
+              setSpiderfiedData({ center: [lat, lng], name, ids });
+            },
+            unspiderfied: () => setSpiderfiedData(null),
+          }}
         >
           {visibleEvents.map((event) => (
-            <EventMarker key={event.id} event={event} showLabel={showLabel} />
+            <EventMarker
+              key={event.id}
+              event={event}
+              showLabel={showLabel}
+              isSpiderfied={spiderfiedData?.ids.has(event.id) ?? false}
+            />
           ))}
         </MarkerClusterGroup>
+
+        {spiderfiedData && showLabel && spiderfiedData.name && (
+          <Marker
+            position={spiderfiedData.center}
+            icon={L.divIcon({ html: '', className: '', iconSize: [0, 0], iconAnchor: [0, 0] })}
+          >
+            <Tooltip permanent direction="top" offset={[0, -24]} className="marker-label" interactive>
+              {spiderfiedData.name}
+            </Tooltip>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );
