@@ -12,10 +12,11 @@ const FI_DAYS = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'];
 interface DatePickerProps {
   value: string; // ISO YYYY-MM-DD
   onChange: (value: string) => void;
+  align?: 'left' | 'right';
   className?: string;
 }
 
-export default function DatePicker({ value, onChange, className }: DatePickerProps) {
+export default function DatePicker({ value, onChange, align = 'left', className }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -75,7 +76,7 @@ export default function DatePicker({ value, onChange, className }: DatePickerPro
         className={`cursor-pointer select-none ${className ?? ''}`}
       />
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 w-[196px]">
+        <div className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 w-[196px] ${align === 'right' ? 'right-0' : 'left-0'}`}>
           <div className="flex items-center justify-between mb-1.5">
             <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 text-base leading-none">‹</button>
             <span className="text-xs font-medium text-gray-700">{FI_MONTHS[viewMonth]} {viewYear}</span>

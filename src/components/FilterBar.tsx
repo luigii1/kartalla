@@ -2,6 +2,7 @@
 
 import type { EventCategory } from '@/lib/types';
 import { CATEGORY_LABELS, CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/types';
+import DatePicker from './DatePicker';
 
 export type SortOption = 'date_asc' | 'date_desc' | 'name_asc';
 
@@ -67,17 +68,17 @@ export default function FilterBar({ filters, eventCount, onChange }: FilterBarPr
         })}
       </div>
       <div className="flex gap-2 items-center">
-        <input
-          type="date"
+        <DatePicker
           value={filters.dateFrom}
-          onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
+          onChange={(v) => onChange({ ...filters, dateFrom: v })}
+          align="left"
           className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <span className="text-gray-400 text-xs shrink-0">–</span>
-        <input
-          type="date"
+        <DatePicker
           value={filters.dateTo}
-          onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
+          onChange={(v) => onChange({ ...filters, dateTo: v })}
+          align="right"
           className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
