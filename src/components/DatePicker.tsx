@@ -67,13 +67,13 @@ export default function DatePicker({ value, onChange, align = 'left', className 
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative flex-1 min-w-0">
       <input
         readOnly
         value={display}
         onClick={() => setOpen(o => !o)}
         placeholder="pp.kk.vvvv"
-        className={`cursor-pointer select-none ${className ?? ''}`}
+        className={`w-full cursor-pointer select-none ${className ?? ''}`}
       />
       {open && (
         <div className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 w-[196px] ${align === 'right' ? 'right-0' : 'left-0'}`}>

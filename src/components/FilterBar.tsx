@@ -72,14 +72,14 @@ export default function FilterBar({ filters, eventCount, onChange }: FilterBarPr
           value={filters.dateFrom}
           onChange={(v) => onChange({ ...filters, dateFrom: v })}
           align="left"
-          className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <span className="text-gray-400 text-xs shrink-0">–</span>
         <DatePicker
           value={filters.dateTo}
           onChange={(v) => onChange({ ...filters, dateTo: v })}
           align="right"
-          className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div className="flex items-center justify-between">
