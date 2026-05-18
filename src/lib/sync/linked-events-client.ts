@@ -13,8 +13,12 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     supportsEventStatus: true,
     supportsInclude: true,
   },
-  // Tampere: endpoint palauttaa 400, oikea URL pitää selvittää
-  // { baseUrl: 'http://linkedevents.tampere.fi/v1', label: 'Tampere', supportsEventStatus: false, supportsInclude: false },
+  {
+    baseUrl: 'http://linkedevents.tampere.fi/v1',
+    label: 'Tampere',
+    supportsEventStatus: false,
+    supportsInclude: false,
+  },
 ];
 
 export interface LinkedEventsEvent {
@@ -59,7 +63,10 @@ export async function fetchLinkedEvents(
 
   while (url) {
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`${source.label} API error: ${res.status}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`${source.label} API error: ${res.status} — url: ${url} — body: ${body.slice(0, 300)}`);
+    }
     const json: ApiResponse = await res.json();
     all.push(...json.data);
     url = json.meta.next;
