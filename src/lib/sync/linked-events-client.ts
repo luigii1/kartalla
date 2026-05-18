@@ -12,7 +12,7 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     supportsEventStatus: true,
   },
   {
-    baseUrl: 'https://linkedevents.tampere.fi/v1',
+    baseUrl: 'http://linkedevents.tampere.fi/v1',
     label: 'Tampere',
     supportsEventStatus: false,
   },
