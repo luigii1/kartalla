@@ -138,10 +138,7 @@ const EventMarker = memo(function EventMarker({
           {event.location_name}
         </Tooltip>
       )}
-      <Popup
-        autoPanPaddingTopLeft={L.point(10, 110)}
-        autoPanPaddingBottomRight={L.point(10, 70)}
-      >
+      <Popup autoPan={false}>
         <div className="min-w-[180px] max-w-[240px]">
           {event.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
