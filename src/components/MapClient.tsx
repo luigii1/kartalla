@@ -55,6 +55,17 @@ export function inBounds(event: Event, bounds: MapBounds): boolean {
   );
 }
 
+function expandBounds(bounds: MapBounds, factor = 0.5): MapBounds {
+  const latPad = (bounds.north - bounds.south) * factor;
+  const lngPad = (bounds.east - bounds.west) * factor;
+  return {
+    north: bounds.north + latPad,
+    south: bounds.south - latPad,
+    east: bounds.east + lngPad,
+    west: bounds.west - lngPad,
+  };
+}
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('fi-FI', {
     day: 'numeric', month: 'numeric', year: 'numeric',
@@ -184,7 +195,7 @@ export default function MapClient({
   }, [onBoundsChange]);
 
   const visibleEvents = useMemo(
-    () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
+    () => bounds ? events.filter((e) => inBounds(e, expandBounds(bounds))) : events,
     [events, bounds]
   );
 
