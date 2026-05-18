@@ -1,5 +1,5 @@
 export type EventCategory = 'music' | 'sports' | 'food' | 'culture' | 'family' | 'other';
-export type EventSource = 'manual' | 'linked_events';
+export type EventSource = 'manual' | 'linked_events' | 'eventbrite';
 
 export interface Event {
   id: string;
