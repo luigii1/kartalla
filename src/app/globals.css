@@ -5,3 +5,6 @@
 html, body { height: 100%; }
 
 .leaflet-container { height: 100%; width: 100%; }
+
+/* Popup must appear above the search button (z-index 1000) and bottom sheet handle (z-index 1001) */
+.leaflet-popup-pane { z-index: 1050; }

@@ -105,7 +105,7 @@ function EventMarker({ event, isSelected, isHovered, onSelectEvent }: {
       zIndexOffset={isHovered ? 1000 : 0}
       eventHandlers={{ click: () => onSelectEvent(event) }}
     >
-      <Popup>
+      <Popup autoPanPaddingBottomRight={L.point(10, 120)}>
         <div className="min-w-[180px] max-w-[240px]">
           {event.image_url && (
             <div className="relative w-full h-28 mb-2">
