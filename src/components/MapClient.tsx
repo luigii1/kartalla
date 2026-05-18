@@ -175,12 +175,23 @@ interface MapClientProps {
 export default function MapClient({
   events, flyTarget, onBoundsChange, onMapClick, addingMode,
 }: MapClientProps) {
+  const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [zoom, setZoom] = useState(12);
+
+  const handleBoundsChange = useCallback((b: MapBounds) => {
+    setBounds(b);
+    onBoundsChange(b);
+  }, [onBoundsChange]);
+
+  const visibleEvents = useMemo(
+    () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
+    [events, bounds]
+  );
 
   // Group events by exact lat/lng to detect same-location clusters
   const locationGroups = useMemo(() => {
     const groups = new Map<string, { lat: number; lng: number; name: string; count: number }>();
-    for (const e of events) {
+    for (const e of visibleEvents) {
       const key = `${e.lat},${e.lng}`;
       if (!groups.has(key)) {
         groups.set(key, { lat: e.lat, lng: e.lng, name: e.location_name ?? '', count: 0 });
@@ -188,7 +199,7 @@ export default function MapClient({
       groups.get(key)!.count++;
     }
     return groups;
-  }, [events]);
+  }, [visibleEvents]);
 
   // Keys with 2+ events at the same location (will be a spider cluster)
   const multiLocKeys = useMemo(() => {
@@ -215,7 +226,7 @@ export default function MapClient({
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        <BoundsController onBoundsChange={onBoundsChange} />
+        <BoundsController onBoundsChange={handleBoundsChange} />
         <MapController flyTarget={flyTarget} />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
         <ZoomTracker onChange={setZoom} />
@@ -228,7 +239,7 @@ export default function MapClient({
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
         >
-          {events.map((event) => (
+          {visibleEvents.map((event) => (
             <EventMarker
               key={event.id}
               event={event}
