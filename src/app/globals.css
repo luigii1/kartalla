@@ -19,7 +19,8 @@ body {
 }
 
 .leaflet-cluster-spider-leg {
-  display: none;
+  display: none !important;
+  stroke-opacity: 0 !important;
 }
 
 .marker-cluster {
