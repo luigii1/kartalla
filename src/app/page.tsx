@@ -66,30 +66,33 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm z-10 flex-shrink-0">
-        <h1 className="text-xl font-bold text-gray-900">Kartalla</h1>
-        <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              <button
-                onClick={() => { setAddingMode((prev) => !prev); setPendingCoords(null); }}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  addingMode ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}>
-                {addingMode ? '✕ Peruuta' : '+ Lisää'}
+    <div className="flex flex-col h-[100dvh]">
+      <header className="bg-white border-b border-gray-200 shadow-sm z-10 flex-shrink-0">
+        <div style={{ height: 'env(safe-area-inset-top, 0px)' }} />
+        <div className="px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900">Kartalla</h1>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <button
+                  onClick={() => { setAddingMode((prev) => !prev); setPendingCoords(null); }}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    addingMode ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}>
+                  {addingMode ? '✕ Peruuta' : '+ Lisää'}
+                </button>
+                <button onClick={() => signOut()}
+                  className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors">
+                  Ulos
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setShowAuth(true)} disabled={authLoading}
+                className="px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                Kirjaudu
               </button>
-              <button onClick={() => signOut()}
-                className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors">
-                Ulos
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setShowAuth(true)} disabled={authLoading}
-              className="px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-              Kirjaudu
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </header>
 
@@ -128,10 +131,14 @@ export default function Home() {
         </div>
 
         <div
-          className={`md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col ${
-            sheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-56px)]'
-          }`}
-          style={{ zIndex: 1001, maxHeight: '80vh' }}
+          className="md:hidden absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 flex flex-col"
+          style={{
+            zIndex: 1001,
+            maxHeight: '80dvh',
+            transform: sheetOpen
+              ? 'translateY(0)'
+              : 'translateY(calc(100% - 56px - env(safe-area-inset-bottom, 0px)))',
+          }}
         >
           <button
             onClick={() => setSheetOpen((o) => !o)}
@@ -158,6 +165,7 @@ export default function Home() {
               </div>
             </>
           )}
+          <div style={{ height: 'env(safe-area-inset-bottom, 0px)', flexShrink: 0 }} />
         </div>
       </div>
 
