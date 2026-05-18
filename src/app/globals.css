@@ -19,7 +19,7 @@ body {
 }
 
 .leaflet-cluster-spider-leg {
-  transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
+  display: none;
 }
 
 .marker-cluster {

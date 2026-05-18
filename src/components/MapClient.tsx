@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Pane, useMapEvents, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -221,6 +221,7 @@ export default function MapClient({
         zoomControl={false}
         className={addingMode ? 'cursor-crosshair' : ''}
       >
+        <Pane name="location-labels" style={{ zIndex: 390 }} />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -257,7 +258,7 @@ export default function MapClient({
               position={[g.lat, g.lng]}
               icon={L.divIcon({ html: '', className: '', iconSize: [0, 0], iconAnchor: [0, 0] })}
             >
-              <Tooltip permanent direction="top" offset={[0, -30]} className="marker-label" interactive>
+              <Tooltip pane="location-labels" permanent direction="top" offset={[0, -30]} className="marker-label" interactive>
                 {g.name}
               </Tooltip>
             </Marker>
