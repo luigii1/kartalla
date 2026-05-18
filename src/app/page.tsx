@@ -116,7 +116,7 @@ export default function Home() {
   );
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative h-dvh w-screen overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Map
           events={filteredEvents}
