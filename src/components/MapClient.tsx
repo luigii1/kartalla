@@ -210,7 +210,7 @@ export default function MapClient({
     return s;
   }, [locationGroups]);
 
-  const showLabel = zoom >= 16;
+  const showLabel = zoom >= 15;
 
   return (
     <div className="relative w-full h-full">
