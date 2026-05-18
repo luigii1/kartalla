@@ -210,7 +210,7 @@ export default function MapClient({
     return s;
   }, [locationGroups]);
 
-  const showLabel = zoom >= 14;
+  const showLabel = zoom >= 15;
 
   return (
     <div className="relative w-full h-full">
@@ -258,7 +258,7 @@ export default function MapClient({
               position={[g.lat, g.lng]}
               icon={L.divIcon({ html: '', className: '', iconSize: [0, 0], iconAnchor: [0, 0] })}
             >
-              <Tooltip pane="location-labels" permanent direction="top" offset={[0, -30]} className="marker-label" interactive>
+              <Tooltip pane="location-labels" permanent direction="top" offset={[0, -22]} className="marker-label" interactive>
                 {g.name}
               </Tooltip>
             </Marker>
