@@ -37,6 +37,7 @@ export default function Home() {
   const [addingMode, setAddingMode] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [showSearchButton, setShowSearchButton] = useState(false);
 
   const lastBoundsRef = useRef<MapBounds | null>(null);
 
@@ -60,13 +61,16 @@ export default function Home() {
     setSheetOpen(false);
   }, []);
 
-  const handleSearchArea = useCallback((bounds: MapBounds) => {
-    lastBoundsRef.current = bounds;
-    fetchByBounds(bounds, filters.dateFrom, filters.dateTo);
-  }, [fetchByBounds, filters.dateFrom, filters.dateTo]);
+  const handleSearch = useCallback(() => {
+    if (!mapBounds) return;
+    lastBoundsRef.current = mapBounds;
+    fetchByBounds(mapBounds, filters.dateFrom, filters.dateTo);
+    setShowSearchButton(false);
+  }, [mapBounds, fetchByBounds, filters.dateFrom, filters.dateTo]);
 
   const handleBoundsChange = useCallback((bounds: MapBounds) => {
     setMapBounds(bounds);
+    setShowSearchButton(true);
   }, []);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
@@ -112,11 +116,9 @@ export default function Home() {
         <Map
           events={filteredEvents}
           flyTarget={flyTarget}
-          onSearchArea={handleSearchArea}
           onBoundsChange={handleBoundsChange}
           onMapClick={handleMapClick}
           addingMode={addingMode}
-          loading={loading}
         />
       </div>
 
@@ -141,13 +143,34 @@ export default function Home() {
         />
       </div>
 
-      <div className="md:hidden absolute top-0 left-0 right-0 z-[500] bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
+      <div
+        className="md:hidden absolute top-0 left-0 right-0 z-[500] bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 flex items-center justify-between"
+        style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top, 0px))', paddingBottom: '0.625rem' }}
+      >
         <h1 className="text-lg font-bold text-gray-900">Kartalla</h1>
         {AuthButtons}
       </div>
 
+      {showSearchButton && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-[500] md:left-[calc(50%+10rem)]"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 60px)' }}
+        >
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="bg-white shadow-lg rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-60 whitespace-nowrap"
+          >
+            {loading ? 'Haetaan...' : 'Etsi tältä alueelta'}
+          </button>
+        </div>
+      )}
+
       {addingMode && (
-        <div className="md:hidden absolute top-[52px] left-0 right-0 z-[500] bg-blue-50 border-b border-blue-100 px-4 py-2 text-xs text-blue-700 text-center">
+        <div
+          className="md:hidden absolute left-0 right-0 z-[500] bg-blue-50 border-b border-blue-100 px-4 py-2 text-xs text-blue-700 text-center"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 44px)' }}
+        >
           Klikkaa karttaa lisätäksesi tapahtuman
         </div>
       )}

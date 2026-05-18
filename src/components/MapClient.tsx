@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -140,31 +140,20 @@ const EventMarker = memo(function EventMarker({
 interface MapClientProps {
   events: Event[];
   flyTarget: Event | null;
-  onSearchArea: (bounds: MapBounds) => void;
   onBoundsChange: (bounds: MapBounds) => void;
   onMapClick?: (lat: number, lng: number) => void;
   addingMode?: boolean;
-  loading: boolean;
 }
 
 export default function MapClient({
-  events, flyTarget,
-  onSearchArea, onBoundsChange, onMapClick, addingMode, loading,
+  events, flyTarget, onBoundsChange, onMapClick, addingMode,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
-  const [showSearchButton, setShowSearchButton] = useState(true);
 
   const handleBoundsChange = useCallback((b: MapBounds) => {
     setBounds(b);
-    setShowSearchButton(true);
     onBoundsChange(b);
   }, [onBoundsChange]);
-
-  const handleSearch = useCallback(() => {
-    if (!bounds) return;
-    setShowSearchButton(false);
-    requestAnimationFrame(() => { onSearchArea(bounds); });
-  }, [bounds, onSearchArea]);
 
   const visibleEvents = useMemo(
     () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
@@ -184,7 +173,6 @@ export default function MapClient({
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        <ZoomControl position="bottomright" />
         <BoundsController onBoundsChange={handleBoundsChange} />
         <MapController flyTarget={flyTarget} />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
@@ -202,26 +190,6 @@ export default function MapClient({
           ))}
         </MarkerClusterGroup>
       </MapContainer>
-
-      {showSearchButton && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[400]">
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="bg-white shadow-lg rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-60 whitespace-nowrap"
-          >
-            {loading ? 'Haetaan...' : 'Etsi tältä alueelta'}
-          </button>
-        </div>
-      )}
-
-      {loading && !showSearchButton && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[400]">
-          <div className="bg-white shadow-md rounded-full px-4 py-2 text-sm text-gray-500 border border-gray-200">
-            Haetaan...
-          </div>
-        </div>
-      )}
     </div>
   );
 }
