@@ -9,8 +9,10 @@ export const LINKED_EVENTS_SOURCES: LinkedEventsSource[] = [
     baseUrl: 'https://api.hel.fi/linkedevents/v1',
     label: 'Helsinki',
   },
-  // Tampere — vahvista endpoint ennen käyttöönottoa
-  // { baseUrl: 'https://linkedevents.tampere.fi/api/v1', label: 'Tampere' },
+  {
+    baseUrl: 'http://linkedevents.tampere.fi/v1',
+    label: 'Tampere',
+  },
 ];
 
 export interface LinkedEventsEvent {

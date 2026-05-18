@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -80,6 +80,12 @@ function BoundsController({ onBoundsChange }: { onBoundsChange: (b: MapBounds) =
   return null;
 }
 
+function ZoomTracker({ onChange }: { onChange: (z: number) => void }) {
+  const map = useMapEvents({ zoomend: () => onChange(map.getZoom()) });
+  useEffect(() => { onChange(map.getZoom()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 function MapController({ flyTarget }: { flyTarget: Event | null }) {
   const map = useMap();
   const prev = useRef<string | null>(null);
@@ -103,8 +109,10 @@ function MapClickHandler({ onMapClick, addingMode }: { onMapClick?: (lat: number
 
 const EventMarker = memo(function EventMarker({
   event,
+  showLabel,
 }: {
   event: Event;
+  showLabel: boolean;
 }) {
   const markerRef = useRef<L.Marker>(null);
   return (
@@ -114,6 +122,11 @@ const EventMarker = memo(function EventMarker({
       icon={createCategoryIcon(event.category, 'normal')}
       eventHandlers={{ click: () => markerRef.current?.openPopup() }}
     >
+      {showLabel && event.location_name && (
+        <Tooltip permanent direction="top" offset={[0, -28]} className="marker-label">
+          {event.location_name}
+        </Tooltip>
+      )}
       <Popup
         autoPanPaddingTopLeft={L.point(10, 110)}
         autoPanPaddingBottomRight={L.point(10, 70)}
@@ -152,6 +165,7 @@ export default function MapClient({
   events, flyTarget, onBoundsChange, onMapClick, addingMode,
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
+  const [zoom, setZoom] = useState(12);
 
   const handleBoundsChange = useCallback((b: MapBounds) => {
     setBounds(b);
@@ -162,6 +176,8 @@ export default function MapClient({
     () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
     [events, bounds]
   );
+
+  const showLabel = zoom >= 16;
 
   return (
     <div className="relative w-full h-full">
@@ -179,6 +195,7 @@ export default function MapClient({
         <BoundsController onBoundsChange={handleBoundsChange} />
         <MapController flyTarget={flyTarget} />
         <MapClickHandler onMapClick={onMapClick} addingMode={addingMode} />
+        <ZoomTracker onChange={setZoom} />
         <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={(cluster: { getChildCount: () => number }) =>
@@ -189,7 +206,7 @@ export default function MapClient({
           spiderfyOnMaxZoom
         >
           {visibleEvents.map((event) => (
-            <EventMarker key={event.id} event={event} />
+            <EventMarker key={event.id} event={event} showLabel={showLabel} />
           ))}
         </MarkerClusterGroup>
       </MapContainer>
