@@ -177,11 +177,6 @@ export default function MapClient({
 }: MapClientProps) {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [zoom, setZoom] = useState(12);
-  const [spiderfiedData, setSpiderfiedData] = useState<{
-    center: [number, number];
-    name: string;
-    ids: Set<string>;
-  } | null>(null);
 
   const handleBoundsChange = useCallback((b: MapBounds) => {
     setBounds(b);
@@ -192,6 +187,28 @@ export default function MapClient({
     () => bounds ? events.filter((e) => inBounds(e, bounds)) : events,
     [events, bounds]
   );
+
+  // Group events by exact lat/lng to detect same-location clusters
+  const locationGroups = useMemo(() => {
+    const groups = new Map<string, { lat: number; lng: number; name: string; count: number }>();
+    for (const e of visibleEvents) {
+      const key = `${e.lat},${e.lng}`;
+      if (!groups.has(key)) {
+        groups.set(key, { lat: e.lat, lng: e.lng, name: e.location_name ?? '', count: 0 });
+      }
+      groups.get(key)!.count++;
+    }
+    return groups;
+  }, [visibleEvents]);
+
+  // Keys with 2+ events at the same location (will be a spider cluster)
+  const multiLocKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const [key, g] of locationGroups) {
+      if (g.count > 1) s.add(key);
+    }
+    return s;
+  }, [locationGroups]);
 
   const showLabel = zoom >= 16;
 
@@ -220,37 +237,32 @@ export default function MapClient({
           maxClusterRadius={50}
           showCoverageOnHover={false}
           spiderfyOnMaxZoom
-          eventHandlers={{
-            spiderfied: (e: any) => {
-              const markers: L.Marker[] = e.cluster.getAllChildMarkers();
-              const ids = new Set(markers.map((m) => m.options.alt as string).filter(Boolean));
-              const { lat, lng } = e.cluster.getLatLng();
-              const name = (markers[0]?.options.title as string) || '';
-              setSpiderfiedData({ center: [lat, lng], name, ids });
-            },
-            unspiderfied: () => setSpiderfiedData(null),
-          }}
         >
           {visibleEvents.map((event) => (
             <EventMarker
               key={event.id}
               event={event}
               showLabel={showLabel}
-              isSpiderfied={spiderfiedData?.ids.has(event.id) ?? false}
+              isSpiderfied={multiLocKeys.has(`${event.lat},${event.lng}`)}
             />
           ))}
         </MarkerClusterGroup>
 
-        {spiderfiedData && showLabel && spiderfiedData.name && (
-          <Marker
-            position={spiderfiedData.center}
-            icon={L.divIcon({ html: '', className: '', iconSize: [0, 0], iconAnchor: [0, 0] })}
-          >
-            <Tooltip permanent direction="top" offset={[0, -24]} className="marker-label" interactive>
-              {spiderfiedData.name}
-            </Tooltip>
-          </Marker>
-        )}
+        {/* Single location-name label per same-location cluster, visible at zoom >= 16 */}
+        {showLabel && Array.from(locationGroups.values())
+          .filter((g) => g.count > 1 && g.name)
+          .map((g) => (
+            <Marker
+              key={`grp-${g.lat},${g.lng}`}
+              position={[g.lat, g.lng]}
+              icon={L.divIcon({ html: '', className: '', iconSize: [0, 0], iconAnchor: [0, 0] })}
+            >
+              <Tooltip permanent direction="top" offset={[0, -30]} className="marker-label" interactive>
+                {g.name}
+              </Tooltip>
+            </Marker>
+          ))
+        }
       </MapContainer>
     </div>
   );
