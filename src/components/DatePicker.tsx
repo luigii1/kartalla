@@ -68,13 +68,15 @@ export default function DatePicker({ value, onChange, align = 'left', className 
 
   return (
     <div ref={ref} className="relative flex-1 min-w-0">
-      <input
-        readOnly
-        value={display}
+      {/* Rendered as a <button> rather than an <input> so mobile Safari never
+          auto-zooms into it on tap (which happens for small-font inputs). */}
+      <button
+        type="button"
         onClick={() => setOpen(o => !o)}
-        placeholder="pp.kk.vvvv"
-        className={`w-full cursor-pointer select-none ${className ?? ''}`}
-      />
+        className={`w-full cursor-pointer select-none text-left ${display ? '' : 'text-gray-400'} ${className ?? ''}`}
+      >
+        {display || 'pp.kk.vvvv'}
+      </button>
       {open && (
         <div className={`absolute z-50 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 w-[196px] ${align === 'right' ? 'right-0' : 'left-0'}`}>
           <div className="flex items-center justify-between mb-1.5">
