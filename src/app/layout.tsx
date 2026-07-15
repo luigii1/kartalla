@@ -12,6 +12,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // Prevent the browser from zooming the UI on mobile (e.g. iOS auto-zoom when
+  // focusing small form fields). The Leaflet map handles its own pinch-zoom, so
+  // the map stays zoomable while the rest of the UI never scales.
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
 };
 
